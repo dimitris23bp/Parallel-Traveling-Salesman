@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <omp.h>
 
+#include "matrix_generator.h"
+
 #define N 4
 #define NUM_OF_THREADS 2
 
@@ -149,8 +151,12 @@ void TSP(int adj[N][N]){
 
 int main(int argc, char const *argv[]){
 	//Adjacency matrix for the given graph 
-	int adj[N][N] = {{0, 10, 15, 20}, {10, 0, 35, 25}, {15, 35, 0, 30}, {20, 25, 30, 0} }; 
+	//int adj[N][N] = {{0, 10, 15, 20}, {10, 0, 35, 25}, {15, 35, 0, 30}, {20, 25, 30, 0} }; 
 
+	int adj[N][N];
+
+	generator(N, adj, 100);
+	display(N, adj);
 
 	//Starting time of solution
 	clock_t begin = clock();
@@ -169,7 +175,7 @@ int main(int argc, char const *argv[]){
 	clock_t end = clock();
 	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-	printf("%f\n", time_spent);
+	printf("Time spent: %f\n", time_spent);
 
 
 	return 0;
