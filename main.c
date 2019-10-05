@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include <pthread.h>
+#include <time.h>
+
+#include "matrix_generator.h"
 
 #define N 4
 
@@ -124,23 +126,22 @@ void TSP(int adj[N][N]){
 	TSPRec(adj, curr_bound, 0, 1, curr_path); 
 } 
 
-
-void* thread_stuff(void* vargp){
+int main(int argc, char const *argv[]){
 	
-	int (*adj)[N] = vargp;
+	//Example path 
+	//int adj[N][N] = {{0, 10, 15, 20}, {10, 0, 35, 25}, {15, 35, 0, 30}, {20, 25, 30, 0} }; 
+
+	int adj[N][N];
+
+	generator(N, adj, 100);
+	display(N, adj);
+
+	//Starting time of solution
+	clock_t begin = clock();
+
 
 	TSP(adj);
-}
-
-int main(int argc, char const *argv[]){
-	//Adjacency matrix for the given graph 
-	int adj[N][N] = {{0, 10, 15, 20}, {10, 0, 35, 25}, {15, 35, 0, 30}, {20, 25, 30, 0} }; 
-
-	pthread_t tid;
-
-  	pthread_create(&tid, NULL, thread_stuff, (void*)&adj);
    	 
-  	pthread_join(tid, NULL);
     printf("Minimum cost : %d\n", final_res); 
 	printf("Path Taken : "); 
 	for (int i = 0; i <= N; i++){ 
@@ -148,6 +149,11 @@ int main(int argc, char const *argv[]){
 	} 
 
 	printf("\n");
+
+	clock_t end = clock();
+	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+	printf("Time spent: %f\n", time_spent);
 
 
 	return 0;
