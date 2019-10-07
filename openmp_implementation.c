@@ -6,8 +6,8 @@
 
 #include "matrix_generator.h"
 
-#define N 20
-#define NUM_OF_THREADS 4
+#define N 25
+#define NUM_OF_THREADS 8
 
 //Example path - May not be used 
 int adj[N][N] = {{0,13,51,18,15,83,27,44,69,34,15,44,35, 52, 27, 70, 64, 61, 9, 88}, 
@@ -193,19 +193,19 @@ int main(int argc, char const *argv[]){
 
 	generator(N, adj, 100);
 	display(N, adj);
-
+	write_to_file(N, adj);
 	//Starting time of solution
 	double start = omp_get_wtime();
 
-	first_node(adj);
+	// first_node(adj);
    	 
-    printf("Minimum cost : %d\n", final_res); 
-	printf("Path Taken : "); 
-	for (int i = 0; i <= N; i++){ 
-		printf("%d ", final_path[i]); 
-	} 
+	//printf("Minimum cost : %d\n", final_res); 
+	// printf("Path Taken : "); 
+	// for (int i = 0; i <= N; i++){ 
+	// 	printf("%d ", final_path[i]); 
+	// } 
 
-	printf("\n");
+	// printf("\n");
 
 	//Finishing time of solution
 	double finish = omp_get_wtime();

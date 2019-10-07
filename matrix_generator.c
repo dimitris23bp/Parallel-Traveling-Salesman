@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
-
+#include <time.h>
 /*
 This is the function that is going to create arrays of any size
 Weights are totally random
@@ -34,13 +33,45 @@ void generator(int size, int (*adj)[size], int max_distance){
 
 void display(int size, int (*adj)[size]){
 
+	int curr_num; 
+
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
 
-			printf("%d ", *(*(adj + i) + j ));
+			curr_num = *(*(adj + i) + j);
+			if(curr_num < 10){
+				printf("%d  ", *(*(adj + i) + j ));
+			} else {
+				printf("%d ", *(*(adj + i) + j ));
+
+			}
 
 		}
 		printf("\n");
 	}
+
+}
+
+void write_to_file(int size, int (*adj)[size]){
+
+	FILE *file;
+	file = fopen("file01.txt", "w+");
+
+
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j ++){
+			fprintf(file,"%d ", *(*(adj + i) + j));
+		}
+		fprintf(file, "\n");
+	}
+
+	fclose(file);
+
+
+}
+
+void read_from_file(int size, int (*adj)[size]){
+
+
 
 }
