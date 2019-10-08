@@ -1,6 +1,8 @@
 CC=gcc
 CFLAGS = -fopenmp
 
+all: openmp serialized 
+
 openmp: openmp_implementation.c matrix_generator.h matrix_generator.c
 	$(CC) -o openmp openmp_implementation.c matrix_generator.c $(CFLAGS)
 
