@@ -9,7 +9,7 @@ Meanwhile, every array must obey some rules
 1. Be symmetric
 2. Contains only integers
 */
-void generator(int size, int (*adj)[size], int max_distance){
+void generator(int size, int (*adj)[size], int min_distance, int max_distance){
 
 	//Initializion for rand();
 	srand(time(NULL));
@@ -18,8 +18,9 @@ void generator(int size, int (*adj)[size], int max_distance){
 		for(int j = 0; j < size; j++){
 
 			if(j < i){
+
 				//Include max_distance value too
-				*(*(adj + i) + j) = (rand() % max_distance) + 1;
+				*(*(adj + i) + j) = min_distance + rand() % (max_distance + 1 - min_distance);
 				*(*(adj + j) + i) = *(*(adj + i) + j);
 			} else if (j == i){
 				*(*(adj + i) + j ) = 0;
@@ -57,7 +58,6 @@ void write_to_file(int size, int (*adj)[size]){
 	FILE *file;
 	file = fopen("file01.txt", "w+");
 
-
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j ++){
 			fprintf(file,"%d ", *(*(adj + i) + j));
@@ -72,6 +72,30 @@ void write_to_file(int size, int (*adj)[size]){
 
 void read_from_file(int size, int (*adj)[size]){
 
+	FILE *file;
+	file = fopen("file01.txt", "r");
 
+	int num = 0;
+	int i = 0;
+	int j = 0;
+
+	while (!feof (file)){  
+		fscanf (file, "%d", &num);      
+		*(*(adj + i) + j) = num;
+		printf("%d\n", *(*(adj + i) + j));
+
+		j++;
+		
+		if(j == size){
+			if(i == size){
+				break;
+			}
+			i++;
+			j = 0;
+		}
+
+
+
+	}
 
 }
