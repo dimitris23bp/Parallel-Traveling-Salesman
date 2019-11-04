@@ -41,10 +41,11 @@ void display(int size, int (*adj)[size]){
 
 			curr_num = *(*(adj + i) + j);
 			if(curr_num < 10){
+				printf("%d   ", *(*(adj + i) + j ));
+			} else if(curr_num < 100){
 				printf("%d  ", *(*(adj + i) + j ));
 			} else {
 				printf("%d ", *(*(adj + i) + j ));
-
 			}
 
 		}
@@ -56,7 +57,10 @@ void display(int size, int (*adj)[size]){
 void write_to_file(int size, int (*adj)[size]){
 
 	FILE *file;
-	file = fopen("file01.txt", "w+");
+	file = fopen("file02.txt", "w+");
+
+	//Add size in first row of the file
+	fprintf(file,"%d\n", size);
 
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j ++){
@@ -71,18 +75,18 @@ void write_to_file(int size, int (*adj)[size]){
 }
 
 void read_from_file(int size, int (*adj)[size]){
-
 	FILE *file;
-	file = fopen("file01.txt", "r");
+	file = fopen("file03.txt", "r");
 
 	int num = 0;
 	int i = 0;
 	int j = 0;
 
+	fscanf (file, "%d", &num);      
+
 	while (!feof (file)){  
 		fscanf (file, "%d", &num);      
 		*(*(adj + i) + j) = num;
-		printf("%d\n", *(*(adj + i) + j));
 
 		j++;
 		
@@ -97,5 +101,18 @@ void read_from_file(int size, int (*adj)[size]){
 
 
 	}
+	fclose(file);
 
+}
+
+int get_size_of_matrix(){
+
+	FILE *file;
+	file = fopen("file03.txt", "r");
+	
+	int size = 0;
+
+	fscanf (file, "%d", &size);      
+printf("%d\n", size );
+	return size;
 }
