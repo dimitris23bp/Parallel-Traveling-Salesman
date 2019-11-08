@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#define FILE_NAME "file04.txt"
+
 /*
 This is the function that is going to create arrays of any size
 Weights are totally random
@@ -57,7 +60,7 @@ void display(int size, int (*adj)[size]){
 void write_to_file(int size, int (*adj)[size]){
 
 	FILE *file;
-	file = fopen("file02.txt", "w+");
+	file = fopen(FILE_NAME, "w+");
 
 	//Add size in first row of the file
 	fprintf(file,"%d\n", size);
@@ -76,7 +79,7 @@ void write_to_file(int size, int (*adj)[size]){
 
 void read_from_file(int size, int (*adj)[size]){
 	FILE *file;
-	file = fopen("file03.txt", "r");
+	file = fopen(FILE_NAME, "r");
 
 	int num = 0;
 	int i = 0;
@@ -108,11 +111,11 @@ void read_from_file(int size, int (*adj)[size]){
 int get_size_of_matrix(){
 
 	FILE *file;
-	file = fopen("file03.txt", "r");
+	file = fopen(FILE_NAME, "r");
 	
 	int size = 0;
 
 	fscanf (file, "%d", &size);      
-printf("%d\n", size );
+
 	return size;
 }
