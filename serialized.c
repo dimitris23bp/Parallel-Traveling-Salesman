@@ -127,26 +127,32 @@ void first_node(int size, int adj[size][size]){
 
 int main(int argc, char const *argv[]){
 
-	int size;
+	int size = N;
+	char option = 'w';
 
 	if(argc == 2){
-		size = atoi(argv[1]);
-	} else if (argc > 2){
-		printf("Too many arguments\n");
-		return 0;
-	} else {
-		size = N;
+		option = argv[1][0];
+		if(option == 'r'){
+			size = get_size_of_matrix();
+		}
+	} else if( argc == 3){
+		option = argv[1][0];
+		size = atoi(argv[2]);
 	}
 
+	int adj[size][size];
 
 	final_path = (int *)malloc(size * sizeof(int));
+	
 
-	//int adj[size][size];
-	//generator(size, adj, 50, 99);
-	//write_to_file(size, adj);
-	size = get_size_of_matrix();
-	int adj[size][size];
-	read_from_file(size, adj);
+	if(option == 'w'){
+		generator(size, adj, 50, 99);
+		write_to_file(size, adj);
+	} else if(option == 'r'){
+		read_from_file(size, adj);
+	} else{
+		return 0;
+	}
 
 	display(size, adj);
 
