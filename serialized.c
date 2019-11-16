@@ -77,8 +77,22 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
   
 			curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
   			
+			if(curr_path[1] == 2 && curr_path[2] == 11 && curr_path[3] == 8 && curr_path[4] == 7 & curr_path[5] == 5 && curr_path[6] == 4){
+				printf("i = %d\n",i );
 
-			if (curr_bound + curr_weight < final_res){ 
+
+				for(int j = 0; j < size +1; j++){
+					printf("%d ",curr_path[j] );
+				}
+				printf("curr bound is: %d\n",curr_bound);
+				printf("curr weught is: %d\n",curr_weight );
+				printf("Final bound is: %d\n",final_res );
+				printf("\n");
+
+			}
+
+
+			if (curr_bound + curr_weight <= final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
@@ -93,7 +107,9 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			for (int j = 0; j <= level - 1; j++) {
 				visited[curr_path[j]] = 1; 
 			}	
-			
+
+			curr_path[level] = -1;
+
 
 		}
 	}
@@ -108,10 +124,12 @@ void first_node(int size, int adj[size][size]){
  	memset(visited, 0, sizeof(visited));
 
 	int curr_bound = 0; 
-  
-	for (int i = 0; i < size; i++) {
+  	curr_bound = firstMin(size, adj, 0);
+  	
+	for (int i = 1; i < size; i++) {
 		curr_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
 	}
+
 
 	if(curr_bound == 1){
 		curr_bound = curr_bound / 2 + 1;

@@ -12,7 +12,7 @@
 
 int temp_bound = INT_MAX;
 unsigned int *final_path;
-unsigned int final_res = UINT_MAX- 100; 
+unsigned int final_res = UINT_MAX; 
 
 void copyToFinal(int size, int* curr_path) 
 { 
@@ -20,7 +20,9 @@ void copyToFinal(int size, int* curr_path)
 		*(final_path + i) = curr_path[i];
 	} 
 
-	*(final_path + size) = curr_path[0]; 
+	*(final_path + size + 1) = curr_path[0]; 
+
+
 } 
   
 int firstMin(int size, int adj[size][size], int i) 
@@ -59,6 +61,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 	if (level == size){ 
 
+		//I don't think this will ever be 0
 		if (adj[curr_path[level - 1]][curr_path[0]] != 0){ 
 			int curr_res = curr_weight + adj[curr_path[level-1]][curr_path[0]]; 
 	  
@@ -67,13 +70,13 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 				if (curr_res < final_res){ 
 					copyToFinal(size, curr_path); 
-					final_res = curr_res; 
+					final_res = curr_res;
 
 				} 
 			}	
-		} 			
+		}
 
-		return; 	
+		return;
 	} 
 
 
@@ -84,6 +87,33 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			curr_weight += adj[curr_path[level - 1]][i]; 
 			curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
 
+			if(curr_path[1] == 2 && curr_path[2] == 11 && curr_path[3] == 8 && curr_path[4] == 7 & curr_path[5] == 5 && curr_path[6] == 4){
+				printf("i = %d\n",i );
+
+
+				for(int j = 0; j < size +1; j++){
+					printf("%d ",curr_path[j] );
+				}
+				printf("curr bound is: %d\n",curr_bound);
+				printf("curr weught is: %d\n",curr_weight );
+				printf("Final bound is: %d\n",final_res );
+				printf("\n");
+
+			}
+
+			// if(curr_path[1] == 1 && curr_path[2] == 7){
+			// 	for(int j = 0; j < size +1; j++){
+			// 		printf("%d ",curr_path[j] );
+			// 	}
+			// 	printf("\n");
+			// 	for(int j = 0; j < size; j++){
+			// 		printf("%d ",visited[j] );
+			// 	}
+			// 	printf("\n");
+			// 	printf("\n");
+			// }
+
+
 			if (curr_bound + curr_weight < final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
@@ -92,13 +122,25 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 			} 
 
+			// if(curr_path[1] == 1 && curr_path[2] == 7){
+			// 	for(int i = 0; i < size +1; i++){
+			// 		printf("%d ",curr_path[i] );
+			// 	}
+			// 	printf("\n");
+
+			// }
+
 			curr_weight -= adj[curr_path[level-1]][i]; 
 			curr_bound = temp; 
 		  	
- 			memset(visited, 0, sizeof(*visited)*size);
+ 			memset(visited, 0, sizeof(int)*size);
 			for (int j = 0; j <= level - 1; j++) {
 				visited[curr_path[j]] = 1; 
 			}	
+
+			//I THINK I need to turn that back
+			curr_path[level] = -1;
+
 			
 
 		}
@@ -107,6 +149,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 
 void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size]){
+
 
 	for (int j = omp_get_thread_num()+1; j < size; j+=NUM_OF_THREADS){
 		
@@ -131,9 +174,10 @@ void first_node(int size, int adj[size][size]){
 
 
 	int init_bound = 0; 
-  
+	init_bound = firstMin(size, adj, 0);
+
   	//init_bound = firstMin(size, adj, 0);
-	for (int i = 0; i < size; i++) {
+	for (int i = 1; i < size; i++) {
 		init_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
 	}
 
@@ -184,7 +228,7 @@ int main(int argc, char const *argv[]){
 
 	int adj[size][size];
 
-	final_path = (int *)malloc(size * sizeof(int));
+	final_path = (int *)malloc((size+1) * sizeof(int));
 	
 
 	if(option == 'w'){

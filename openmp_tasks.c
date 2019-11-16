@@ -20,12 +20,6 @@ void copyToFinal(int size, int* curr_path)
 	} 
 
 	*(final_path + size) = curr_path[0];
-
-	// printf("Best by now: ");
-	// for(int i = 0; i < size; i++){
-	// 	printf("%d ",final_path[i]);
-	// }
-	// printf("\nResult: %d\n",final_res );
 } 
   
 int firstMin(int size, int adj[size][size], int i) 
@@ -90,7 +84,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 				curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
   			}
 
-			if (curr_bound + curr_weight < final_res){ 
+			if (curr_bound + curr_weight <= final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
@@ -104,7 +98,10 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
  			memset(visited, 0, sizeof(*visited)*size);
 			for (int j = 0; j <= level - 1; j++) {
 				visited[curr_path[j]] = 1; 
-			}	
+			}
+
+			curr_path[level] = -1;
+
 
 		}
 	}
@@ -112,16 +109,16 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 
 void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int j){
-				int level = 1;
-				int temp = curr_bound; 
+	int level = 1;
+	int temp = curr_bound; 
 
-				int curr_weight = adj[curr_path[level - 1]][j]; 
+	int curr_weight = adj[curr_path[level - 1]][j]; 
 
-				curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, j))/2); 
-				curr_path[level] = j; 
-				visited[j] = 1; 
+	curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, j))/2); 
+	curr_path[level] = j; 
+	visited[j] = 1; 
 
-				recursion(size, adj, curr_bound, curr_weight, 2, curr_path, visited); 
+	recursion(size, adj, curr_bound, curr_weight, 2, curr_path, visited); 
 	 		
 
 }
