@@ -126,7 +126,7 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 }
 
 
-void first_node(int size, int adj[size][size]){
+void first_node(int size, int adj[size][size], int argc, char *argv[]){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
@@ -164,7 +164,7 @@ void first_node(int size, int adj[size][size]){
 		seconds[i-1] = i;
 	}
 
-	MPI_Init(NULL,NULL);
+	MPI_Init(&argc,&argv);
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
@@ -178,6 +178,9 @@ void first_node(int size, int adj[size][size]){
 	int curr_bound = init_bound;
 
 	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second); 
+
+	MPI_Finalize();
+
 }
  
 
@@ -216,9 +219,8 @@ int main(int argc, char const *argv[]){
 	
 	//Starting time of solution
 
-	first_node(size, adj);
+	first_node(size, adj, argc, argv);
 
-	MPI_Finalize();
    	
 	printf("Minimum cost : %d\n", final_res); 
 	printf("Path Taken : "); 
