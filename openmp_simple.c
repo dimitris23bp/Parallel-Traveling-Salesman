@@ -20,7 +20,9 @@ void copyToFinal(int size, int* curr_path)
 		*(final_path + i) = curr_path[i];
 	} 
 
-	*(final_path + size + 1) = curr_path[0]; 
+	*(final_path + size) = curr_path[0]; 
+
+	//printf("%d\n", *(final_path + size + 1));
 
 
 } 
@@ -87,19 +89,19 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			curr_weight += adj[curr_path[level - 1]][i]; 
 			curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
 
-			if(curr_path[1] == 2 && curr_path[2] == 11 && curr_path[3] == 8 && curr_path[4] == 7 & curr_path[5] == 5 && curr_path[6] == 4){
-				printf("i = %d\n",i );
+			// if(curr_path[1] == 2 && curr_path[2] == 11 && curr_path[3] == 8 && curr_path[4] == 7 & curr_path[5] == 5 && curr_path[6] == 4){
+			// 	printf("i = %d\n",i );
 
 
-				for(int j = 0; j < size +1; j++){
-					printf("%d ",curr_path[j] );
-				}
-				printf("curr bound is: %d\n",curr_bound);
-				printf("curr weught is: %d\n",curr_weight );
-				printf("Final bound is: %d\n",final_res );
-				printf("\n");
+			// 	for(int j = 0; j < size +1; j++){
+			// 		printf("%d ",curr_path[j] );
+			// 	}
+			// 	printf("curr bound is: %d\n",curr_bound);
+			// 	printf("curr weught is: %d\n",curr_weight );
+			// 	printf("Final bound is: %d\n",final_res );
+			// 	printf("\n");
 
-			}
+			// }
 
 			// if(curr_path[1] == 1 && curr_path[2] == 7){
 			// 	for(int j = 0; j < size +1; j++){
@@ -176,7 +178,6 @@ void first_node(int size, int adj[size][size]){
 	int init_bound = 0; 
 	init_bound = firstMin(size, adj, 0);
 
-  	//init_bound = firstMin(size, adj, 0);
 	for (int i = 1; i < size; i++) {
 		init_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
 	}
@@ -207,6 +208,8 @@ void first_node(int size, int adj[size][size]){
 
 		second_node(size, adj, curr_bound, curr_path, visited); 
 
+		//printf("%d\n", *(final_path + size + 1));
+
 	}
 
 } 
@@ -222,13 +225,15 @@ int main(int argc, char const *argv[]){
 			size = get_size_of_matrix();
 		}
 	} else if( argc == 3){
+		// First char of the first argument is the option
 		option = argv[1][0];
+		// Second argument (integer) is size
 		size = atoi(argv[2]);
 	}
 
 	int adj[size][size];
 
-	final_path = (int *)malloc((size+1) * sizeof(int));
+	final_path = (int *)calloc(1, (size+1) * sizeof(int));
 	
 
 	if(option == 'w'){
@@ -255,6 +260,7 @@ int main(int argc, char const *argv[]){
 
 	printf("\n");
 
+	printf("%d\n",final_path[size + 1] );
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 

@@ -73,7 +73,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 	} 
 
 
-	for (int i = 0; i < size; i++){ 
+	for (int i = 1; i < size; i++){ 
 		if (adj[curr_path[level-1]][i] != 0 && visited[i] == 0){ 
 			int temp = curr_bound; 
 			curr_weight += adj[curr_path[level - 1]][i]; 
@@ -84,7 +84,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 				curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
   			}
 
-			if (curr_bound + curr_weight <= final_res){ 
+			if (curr_bound + curr_weight < final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
@@ -95,7 +95,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			curr_weight -= adj[curr_path[level-1]][i]; 
 			curr_bound = temp; 
 		  	
- 			memset(visited, 0, sizeof(*visited)*size);
+ 			memset(visited, 0, sizeof(int)*size);
 			for (int j = 0; j <= level - 1; j++) {
 				visited[curr_path[j]] = 1; 
 			}
@@ -128,7 +128,9 @@ void first_node(int size, int adj[size][size]){
 
 	int init_bound = 0; 
   
-	for (int i = 0; i < size; i++) {
+	init_bound = firstMin(size, adj, 0);
+
+	for (int i = 1; i < size; i++) {
 		init_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
 	}
 
