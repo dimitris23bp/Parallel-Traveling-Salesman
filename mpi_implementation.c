@@ -12,6 +12,7 @@
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
 
+
 void copyToFinal(int size, int* curr_path) 
 { 
 	for (int i = 0; i < size; i++) {
@@ -20,7 +21,7 @@ void copyToFinal(int size, int* curr_path)
 
 	*(final_path + size) = curr_path[0];
 
-	MPI_Status status;
+	//I will eventually add Bcast or Send in the near future
 	//MPI_Bcast(&final_path, size + 1, MPI_INT, status.MPI_SOURCE, MPI_COMM_WORLD); 
 } 
 
@@ -92,7 +93,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			curr_weight -= adj[curr_path[level-1]][i]; 
 			curr_bound = temp; 
 		  	
- 			memset(visited, 0, sizeof(*visited)*size);
+ 			memset(visited, 0, sizeof(int)*size);
 			for (int j = 0; j <= level - 1; j++) {
 				visited[curr_path[j]] = 1; 
 			}	
@@ -117,7 +118,7 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited); 
 
 			curr_bound = temp; 
-	 		memset(visited, 0, sizeof(*visited)*size);
+	 		memset(visited, 0, sizeof(int)*size);
 	 		visited[0] = 1;
 	 	}
 	}
@@ -126,13 +127,14 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 }
 
 
-void first_node(int size, int adj[size][size], int argc, char *argv[]){
+void first_node(int size, int adj[size][size], int numtasks){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
 
  	int visited[size];
  	memset(visited, 0, sizeof(visited));
+
 
 	int init_bound = 0; 
   
@@ -151,45 +153,45 @@ void first_node(int size, int adj[size][size], int argc, char *argv[]){
 	
 
 	int recv_size;
-	if(size % NUM_OF_THREADS == 0){
-		recv_size = size / NUM_OF_THREADS;
+	if(size % numtasks == 0){
+		recv_size = size / numtasks;
 	} else {
-		recv_size = (size / NUM_OF_THREADS) + 1;
+		recv_size = (size / numtasks) + 1;
 	}
 		
-	int rank, numtasks, recv_second[recv_size];
+	int recv_second[recv_size];
 
 	int seconds[size];
 	for(int i = 1; i < size; i++){
 		seconds[i-1] = i;
 	}
 
-	MPI_Init(&argc,&argv);
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-
 	//Share all possible second nodes to each processor 
 	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
-	
-	//Make sure that every processor got there second nodes
-	MPI_Barrier(MPI_COMM_WORLD);
 
+	printf("Hello World\n");
+	
 	int curr_bound = init_bound;
 
 	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second); 
+	printf("It's the end\n");
 
-	MPI_Finalize();
 
 }
  
 
 
-int main(int argc, char const *argv[]){
-
+int main(int argc, char *argv[]){
 
 	int size = N;
 	char option = 'r';
+
+	int rank, numtasks;
+
+	MPI_Init(&argc,&argv);
+
+	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	if(argc == 2){
 		option = argv[1][0];
@@ -203,8 +205,15 @@ int main(int argc, char const *argv[]){
 
 	int adj[size][size];
 
-	final_path = (int *)malloc(size * sizeof(int));
-	
+	// I add one more because of a corrupted size vs. prev_size error. Probably needs it to store \0 byte at the end
+	final_path = (int*) malloc(size * sizeof(int) +1);
+
+	// Check if the memory has been successfully 
+    // allocated by malloc or not 
+    if (final_path == NULL) { 
+        printf("Memory not allocated.\n"); 
+        exit(0); 
+    } 
 
 	if(option == 'w'){
 		generator(size, adj, 50, 99);
@@ -219,7 +228,7 @@ int main(int argc, char const *argv[]){
 	
 	//Starting time of solution
 
-	first_node(size, adj, argc, argv);
+	first_node(size, adj, numtasks);
 
    	
 	printf("Minimum cost : %d\n", final_res); 
@@ -234,6 +243,10 @@ int main(int argc, char const *argv[]){
 	//double finish = omp_get_wtime();
 
 	//printf("Time spent: %f\n", finish - start);
+
+	MPI_Finalize();
+	printf("Good \n");
+
 
 	return 0;
 }
