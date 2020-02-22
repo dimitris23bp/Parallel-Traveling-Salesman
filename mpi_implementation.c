@@ -127,7 +127,7 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 }
 
 
-void first_node(int size, int adj[size][size], int numtasks){
+void first_node(int size, int adj[size][size], int numtasks, int rank){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
@@ -158,23 +158,71 @@ void first_node(int size, int adj[size][size], int numtasks){
 	} else {
 		recv_size = (size / numtasks) + 1;
 	}
-		
+
+	//Second nodes that every proccessor will get
+	// ***SPOILER ALERT*** some of them might be -1
 	int recv_second[recv_size];
 
+	//All second nodes (with the -1s too)
 	int seconds[size];
-	for(int i = 1; i < size; i++){
-		seconds[i-1] = i;
+
+	if(rank == 0){
+		//How many real seconds nodes
+		int how_many_each[numtasks];
+
+		//How many second nodes are the minimum
+		int baseline_of_seconds = size / numtasks;
+
+		// Minus 1, because I don't care about node number 0 (it is the root node)
+		int diafora = size % numtasks - 1;
+
+
+
+		// Calculate how_many_each
+		for(int i = 0; i < numtasks; i++){
+			how_many_each[i] = baseline_of_seconds;
+			if(diafora != 0){
+				how_many_each[i]++;
+				diafora--;
+			}
+		}
+	
+		printf("How many: %d\n", how_many_each[0]);
+		printf("How many: %d\n", how_many_each[1]);
+		printf("How many: %d\n", how_many_each[2]);
+		printf("How many: %d\n", how_many_each[3]);
+
+
+		int second_node = 1;
+
+		//Iterate as many times as the number of machines
+		for(int i = 0; i < numtasks; i++){
+
+			// Iterate as many times as the biggest amount of second nodes on one machine
+			for(int j = 0; j < recv_size; j++){
+				if(how_many_each[i] != 0){
+					how_many_each[i]--;
+					seconds[(i*recv_size) + j] = second_node++;
+				} else {
+					seconds[(i*recv_size) + j] = -1;
+				}
+				printf("Seconds[%d]: %d\n", i*recv_size +j, seconds[i*recv_size +j]);
+			}
+
+		}
+
 	}
 
 	//Share all possible second nodes to each processor 
 	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-	printf("Hello World\n");
+	printf("Got %d in rank %d\n", recv_second[0], rank);
+	printf("Got %d in rank %d\n", recv_second[1], rank);
+	printf("Got %d in rank %d\n", recv_second[2], rank);
 	
 	int curr_bound = init_bound;
 
 	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second); 
-	printf("It's the end\n");
 
 
 }
@@ -223,12 +271,13 @@ int main(int argc, char *argv[]){
 	} else{
 		return 0;
 	}
-
-	display(size, adj);
+	
+	if(rank == 0)
+		display(size, adj);
 	
 	//Starting time of solution
 
-	first_node(size, adj, numtasks);
+	first_node(size, adj, numtasks, rank);
 
    	
 	printf("Minimum cost : %d\n", final_res); 
@@ -245,7 +294,6 @@ int main(int argc, char *argv[]){
 	//printf("Time spent: %f\n", finish - start);
 
 	MPI_Finalize();
-	printf("Good \n");
 
 
 	return 0;
