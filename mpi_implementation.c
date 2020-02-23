@@ -7,13 +7,12 @@
 #include "matrix_generator.h"
 
 #define N 20
-#define NUM_OF_THREADS 8
 
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
 
 
-void copyToFinal(int size, int* curr_path) 
+void copyToFinal(int size, int* curr_path, int rank) 
 { 
 	for (int i = 0; i < size; i++) {
 		*(final_path + i) = curr_path[i];
@@ -21,8 +20,7 @@ void copyToFinal(int size, int* curr_path)
 
 	*(final_path + size) = curr_path[0];
 
-	//I will eventually add Bcast or Send in the near future
-	//MPI_Bcast(&final_path, size + 1, MPI_INT, status.MPI_SOURCE, MPI_COMM_WORLD); 
+	//printf("Rank is %d\n",rank );
 } 
 
 int firstMin(int size, int adj[size][size], int i) 
@@ -57,7 +55,7 @@ int secondMin(int size, int adj[size][size], int i)
 	return second; 
 } 
 
-void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size]){ 
+void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int rank){ 
 
 	if (level == size){ 
 
@@ -65,7 +63,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			int curr_res = curr_weight + adj[curr_path[level-1]][curr_path[0]]; 
 	  
 			if (curr_res < final_res){ 
-				copyToFinal(size, curr_path); 
+				copyToFinal(size, curr_path, rank); 
 				final_res = curr_res; 
 
 			} 
@@ -86,7 +84,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited); 
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, rank); 
 
 			} 
 
@@ -104,18 +102,18 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 }
 
 
-void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int recv_size, int recv_second[recv_size]){
+void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int recv_size, int recv_second[recv_size], int rank){
 
-  	for(int i = 1; i < recv_size; i++){
-  		if(recv_second[i] != 0){
-		
+  	for(int i = 0; i < recv_size; i++){
+  		if(recv_second[i] != -1){
+
 			int temp = curr_bound; 
 			curr_bound -= ((secondMin(size, adj, curr_path[0]) + firstMin(size, adj, recv_second[i]))/2); 
 	  			
 			curr_path[1] = recv_second[i]; 
 			visited[recv_second[i]] = 1; 
 
-			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited); 
+			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, rank); 
 
 			curr_bound = temp; 
 	 		memset(visited, 0, sizeof(int)*size);
@@ -131,14 +129,17 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
+	curr_path[0] = 0; 
 
  	int visited[size];
  	memset(visited, 0, sizeof(visited));
-
+	visited[0] = 1; 
 
 	int init_bound = 0; 
   
-	for (int i = 0; i < size; i++) {
+	init_bound = firstMin(size, adj, 0);
+
+	for (int i = 1; i < size; i++) {
 		init_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
 	}
 
@@ -147,13 +148,10 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 	} else {
 		init_bound = init_bound / 2; 
 	}
-
-	visited[0] = 1; 
-	curr_path[0] = 0; 
 	
 
 	int recv_size;
-	if(size % numtasks == 0){
+	if((size-1) % numtasks == 0){
 		recv_size = size / numtasks;
 	} else {
 		recv_size = (size / numtasks) + 1;
@@ -164,7 +162,7 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 	int recv_second[recv_size];
 
 	//All second nodes (with the -1s too)
-	int seconds[size];
+	int seconds[numtasks * recv_size];
 
 	if(rank == 0){
 		//How many real seconds nodes
@@ -187,10 +185,10 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 			}
 		}
 	
-		printf("How many: %d\n", how_many_each[0]);
-		printf("How many: %d\n", how_many_each[1]);
-		printf("How many: %d\n", how_many_each[2]);
-		printf("How many: %d\n", how_many_each[3]);
+		// printf("How many: %d\n", how_many_each[0]);
+		// printf("How many: %d\n", how_many_each[1]);
+		// printf("How many: %d\n", how_many_each[2]);
+		// printf("How many: %d\n", how_many_each[3]);
 
 
 		int second_node = 1;
@@ -206,7 +204,7 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 				} else {
 					seconds[(i*recv_size) + j] = -1;
 				}
-				printf("Seconds[%d]: %d\n", i*recv_size +j, seconds[i*recv_size +j]);
+				//printf("Seconds[%d]: %d\n", i*recv_size +j, seconds[i*recv_size +j]);
 			}
 
 		}
@@ -216,17 +214,17 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 	//Share all possible second nodes to each processor 
 	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-	printf("Got %d in rank %d\n", recv_second[0], rank);
-	printf("Got %d in rank %d\n", recv_second[1], rank);
-	printf("Got %d in rank %d\n", recv_second[2], rank);
+	//printf("Received is %d and seconds are %d\n",sizeof(recv_second)/4, sizeof(seconds)/4 );
+	for(int i = 0;i < recv_size;i++){
+		printf("Got %d in rank %d\n", recv_second[i], rank);
 	
+	}
+
 	int curr_bound = init_bound;
 
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second); 
-
+	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, rank); 
 
 }
- 
 
 
 int main(int argc, char *argv[]){
@@ -272,21 +270,67 @@ int main(int argc, char *argv[]){
 		return 0;
 	}
 	
-	if(rank == 0)
+	if(rank == 0){
 		display(size, adj);
+	}
 	
 	//Starting time of solution
 
+	// This is the only function of the solution in main. Everything else is into this
 	first_node(size, adj, numtasks, rank);
 
-   	
-	printf("Minimum cost : %d\n", final_res); 
-	printf("Path Taken : "); 
-	for (int i = 0; i <= size; i++){ 
-		printf("%d ", final_path[i]); 
-	} 
+	int finals[numtasks];
 
-	printf("\n");
+	printf("Final %d rank: %d\n",final_res, rank );
+
+	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+	// Index of the rank with the best result
+	int index = 0;
+
+	// Find the minimum of each rank's minimum
+	if (rank == 0)
+	{	
+		for(int i = 1; i < numtasks; i++){
+			if (finals[i] < final_res){
+				final_res = finals[i];
+				index = i;
+			}
+		}
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	// Send index to everyone so they know who must send its path
+	MPI_Bcast(&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+	// If the best is master, don't send/receive anything
+	if(index != 0){
+
+		int tag = 1;
+
+		// If this rank has the minimum, then the path
+		if(rank == index){
+			MPI_Send(final_path, size+1, MPI_INT, 0, tag, MPI_COMM_WORLD);
+		} else if(rank == 0){
+			MPI_Status Status;
+			MPI_Recv(final_path, size+1, MPI_INT, index, tag, MPI_COMM_WORLD, &Status);
+		}
+	
+	}
+	
+   	// Display minimum cost and the path of it
+   	if(rank == 0){
+		printf("Minimum cost : %d from %d\n", final_res, rank); 
+		printf("Path Taken : "); 
+		for (int i = 0; i <= size; i++){ 
+			printf("%d ", final_path[i]); 
+		} 
+
+		printf("\n");
+	}
 
 	//Finishing time of solution
 	//double finish = omp_get_wtime();
