@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <time.h>
 
 #include "matrix_generator.h"
 
@@ -273,6 +274,10 @@ int main(int argc, char *argv[]){
 	if(rank == 0){
 		display(size, adj);
 	}
+
+	//Starting time of solution
+	clock_t begin = clock();
+
 	
 	//Starting time of solution
 
@@ -323,19 +328,20 @@ int main(int argc, char *argv[]){
 	
    	// Display minimum cost and the path of it
    	if(rank == 0){
-		printf("Minimum cost : %d from %d\n", final_res, rank); 
+		printf("Minimum cost : %d\n", final_res); 
 		printf("Path Taken : "); 
 		for (int i = 0; i <= size; i++){ 
 			printf("%d ", final_path[i]); 
 		} 
 
 		printf("\n");
+
+		clock_t end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+		printf("Time spent: %f\n", time_spent);
+
 	}
-
-	//Finishing time of solution
-	//double finish = omp_get_wtime();
-
-	//printf("Time spent: %f\n", finish - start);
 
 	MPI_Finalize();
 
