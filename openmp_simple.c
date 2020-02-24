@@ -10,7 +10,6 @@
 #define N 20
 #define NUM_OF_THREADS 8
 
-int temp_bound = INT_MAX;
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
 
@@ -89,33 +88,6 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			curr_weight += adj[curr_path[level - 1]][i]; 
 			curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
 
-			// if(curr_path[1] == 2 && curr_path[2] == 11 && curr_path[3] == 8 && curr_path[4] == 7 & curr_path[5] == 5 && curr_path[6] == 4){
-			// 	printf("i = %d\n",i );
-
-
-			// 	for(int j = 0; j < size +1; j++){
-			// 		printf("%d ",curr_path[j] );
-			// 	}
-			// 	printf("curr bound is: %d\n",curr_bound);
-			// 	printf("curr weught is: %d\n",curr_weight );
-			// 	printf("Final bound is: %d\n",final_res );
-			// 	printf("\n");
-
-			// }
-
-			// if(curr_path[1] == 1 && curr_path[2] == 7){
-			// 	for(int j = 0; j < size +1; j++){
-			// 		printf("%d ",curr_path[j] );
-			// 	}
-			// 	printf("\n");
-			// 	for(int j = 0; j < size; j++){
-			// 		printf("%d ",visited[j] );
-			// 	}
-			// 	printf("\n");
-			// 	printf("\n");
-			// }
-
-
 			if (curr_bound + curr_weight < final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
@@ -123,14 +95,6 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited); 
 
 			} 
-
-			// if(curr_path[1] == 1 && curr_path[2] == 7){
-			// 	for(int i = 0; i < size +1; i++){
-			// 		printf("%d ",curr_path[i] );
-			// 	}
-			// 	printf("\n");
-
-			// }
 
 			curr_weight -= adj[curr_path[level-1]][i]; 
 			curr_bound = temp; 
@@ -260,7 +224,6 @@ int main(int argc, char const *argv[]){
 
 	printf("\n");
 
-	printf("%d\n",final_path[size + 1] );
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 
