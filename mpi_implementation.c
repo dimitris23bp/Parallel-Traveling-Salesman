@@ -6,23 +6,12 @@
 #include <time.h>
 
 #include "matrix_generator.h"
+#include "common_functions.h"
 
 #define N 20
 
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
-
-
-void copyToFinal(int size, int* curr_path, int rank) 
-{ 
-	for (int i = 0; i < size; i++) {
-		*(final_path + i) = curr_path[i];
-	} 
-
-	*(final_path + size) = curr_path[0];
-
-} 
-
 
 void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int rank, int** first_mins, int ** second_mins){ 
 
@@ -32,7 +21,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 			int curr_res = curr_weight + adj[curr_path[level-1]][curr_path[0]]; 
 	  
 			if (curr_res < final_res){ 
-				copyToFinal(size, curr_path, rank); 
+				copy_to_final(size, curr_path, final_path); 
 				final_res = curr_res; 
 
 			} 
@@ -270,7 +259,7 @@ int main(int argc, char *argv[]){
 
 	int finals[numtasks];
 
-	printf("Final %d rank: %d\n",final_res, rank );
+	//printf("Final %d rank: %d\n",final_res, rank );
 
 	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
 

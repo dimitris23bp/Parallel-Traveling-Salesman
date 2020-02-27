@@ -6,21 +6,13 @@
 #include <time.h>
 
 #include "matrix_generator.h"
+#include "common_functions.h"
 
 #define N 20
 #define NUM_OF_THREADS 8
 
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
-
-void copyToFinal(int size, int* curr_path) 
-{ 
-	for (int i = 0; i < size; i++) {
-		*(final_path + i) = curr_path[i];
-	} 
-
-	*(final_path + size) = curr_path[0];
-} 
   
 void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int** first_mins, int** second_mins){ 
 
@@ -30,7 +22,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 	  		#pragma omp critical
 	  		{
 				if (curr_res < final_res){
-					copyToFinal(size, curr_path); 
+					copy_to_final(size, curr_path, final_path); 
 					final_res = curr_res; 
 				}
 			} 
