@@ -1,20 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <string.h>
 #include <omp.h>
-#include <time.h>
-
 
 #include "matrix_generator.h"
 #include "common_functions.h"
 
-#define N 20
 #define NUM_OF_THREADS 8
-
-unsigned int *final_path;
-unsigned int final_res = UINT_MAX; 
-
 
 void recursion(
 	int size, 

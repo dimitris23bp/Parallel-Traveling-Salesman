@@ -1,15 +1,7 @@
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "matrix_generator.h"
 #include "common_functions.h"
-
-#define N 20
-
-unsigned int *final_path;
   
 void recursion(
 	int size, 
