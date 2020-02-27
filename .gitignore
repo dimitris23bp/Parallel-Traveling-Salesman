@@ -3,5 +3,3 @@ openmp_simple
 openmp_tasks
 serialized
 slow-code/
-file*
-
