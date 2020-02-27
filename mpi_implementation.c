@@ -13,7 +13,15 @@
 unsigned int *final_path;
 unsigned int final_res = UINT_MAX; 
 
-void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int rank, int** first_mins, int ** second_mins){ 
+void recursion(
+	int size, 
+	int adj[size][size], 
+	int curr_bound, 
+	int curr_weight, 
+	int level, 
+	int curr_path[size+1], 
+	int visited[size], 
+	int** first_mins, int ** second_mins){ 
 
 	if (level == size){ 
 
@@ -42,7 +50,7 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, rank, first_mins, second_mins); 
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins); 
 
 			} 
 
@@ -60,7 +68,15 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 }
 
 
-void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int recv_size, int recv_second[recv_size], int rank, int** first_mins, int** second_mins){
+void second_node(
+	int size, 
+	int adj[size][size], 
+	int curr_bound, 
+	int curr_path[size+1], 
+	int visited[size], 
+	int recv_size, 
+	int recv_second[recv_size], 
+	int** first_mins, int** second_mins){
 
   	for(int i = 0; i < recv_size; i++){
   		if(recv_second[i] != -1){
@@ -71,7 +87,7 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 			curr_path[1] = recv_second[i]; 
 			visited[recv_second[i]] = 1; 
 
-			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, rank, first_mins, second_mins); 
+			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, first_mins, second_mins); 
 
 			curr_bound = temp; 
 	 		memset(visited, 0, sizeof(int)*size);
@@ -81,7 +97,12 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 
 }
 
-void first_node(int size, int adj[size][size], int numtasks, int rank, int** first_mins, int** second_mins){
+void first_node(
+	int size, 
+	int adj[size][size], 
+	int numtasks, 
+	int rank, 
+	int** first_mins, int** second_mins){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
@@ -139,12 +160,6 @@ void first_node(int size, int adj[size][size], int numtasks, int rank, int** fir
 				diafora--;
 			}
 		}
-	
-		// printf("How many: %d\n", how_many_each[0]);
-		// printf("How many: %d\n", how_many_each[1]);
-		// printf("How many: %d\n", how_many_each[2]);
-		// printf("How many: %d\n", how_many_each[3]);
-
 
 		int second_node = 1;
 
@@ -159,7 +174,6 @@ void first_node(int size, int adj[size][size], int numtasks, int rank, int** fir
 				} else {
 					seconds[(i*recv_size) + j] = -1;
 				}
-				//printf("Seconds[%d]: %d\n", i*recv_size +j, seconds[i*recv_size +j]);
 			}
 
 		}
@@ -171,7 +185,7 @@ void first_node(int size, int adj[size][size], int numtasks, int rank, int** fir
 
 	int curr_bound = init_bound;
 
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, rank, first_mins, second_mins); 
+	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, first_mins, second_mins); 
 
 }
 
@@ -259,10 +273,7 @@ int main(int argc, char *argv[]){
 
 	int finals[numtasks];
 
-	//printf("Final %d rank: %d\n",final_res, rank );
-
 	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
 
 	// Index of the rank with the best result
 	int index = 0;

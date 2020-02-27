@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define FILE_NAME "file02.txt"
+#define FILE_NAME "file03.txt"
 
 /*
 This is the function that is going to create arrays of any size
