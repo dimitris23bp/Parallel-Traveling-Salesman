@@ -21,42 +21,10 @@ void copyToFinal(int size, int* curr_path, int rank)
 
 	*(final_path + size) = curr_path[0];
 
-	//printf("Rank is %d\n",rank );
 } 
 
-int firstMin(int size, int adj[size][size], int i) 
-{ 
-	int min = INT_MAX; 
-	
-	for (int k = 0; k < size; k++){ 
-		if (adj[i][k] < min && i != k){ 
-			min = adj[i][k]; 
-		}
-	}
-	
-	return min;
-} 
-  
-int secondMin(int size, int adj[size][size], int i) 
-{ 
-	int first = INT_MAX;
-	int second = INT_MAX;
 
-	for (int j=0; j<size; j++){ 
-		if (i != j) { 
-
-			if (adj[i][j] <= first){ 
-				second = first; 
-				first = adj[i][j]; 
-			} 
-			else if (adj[i][j] <= second) 
-				second = adj[i][j]; 
-		}
-	} 
-	return second; 
-} 
-
-void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int rank){ 
+void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, int level, int curr_path[size+1], int visited[size], int rank, int** first_mins, int ** second_mins){ 
 
 	if (level == size){ 
 
@@ -79,13 +47,13 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 
 			int temp = curr_bound; 
 			curr_weight += adj[curr_path[level - 1]][i]; 
-			curr_bound -= ((secondMin(size, adj, curr_path[level - 1]) + firstMin(size, adj, i))/2); 
+			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + *(*first_mins + i))/2); 
 
 			if (curr_bound + curr_weight < final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, rank); 
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, rank, first_mins, second_mins); 
 
 			} 
 
@@ -103,18 +71,18 @@ void recursion(int size, int adj[size][size], int curr_bound, int curr_weight, i
 }
 
 
-void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int recv_size, int recv_second[recv_size], int rank){
+void second_node(int size, int adj[size][size], int curr_bound, int curr_path[size+1], int visited[size], int recv_size, int recv_second[recv_size], int rank, int** first_mins, int** second_mins){
 
   	for(int i = 0; i < recv_size; i++){
   		if(recv_second[i] != -1){
 
 			int temp = curr_bound; 
-			curr_bound -= ((secondMin(size, adj, curr_path[0]) + firstMin(size, adj, recv_second[i]))/2); 
-	  			
+			curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + i))/2); 
+	  		
 			curr_path[1] = recv_second[i]; 
 			visited[recv_second[i]] = 1; 
 
-			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, rank); 
+			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, rank, first_mins, second_mins); 
 
 			curr_bound = temp; 
 	 		memset(visited, 0, sizeof(int)*size);
@@ -122,11 +90,9 @@ void second_node(int size, int adj[size][size], int curr_bound, int curr_path[si
 	 	}
 	}
 
-
 }
 
-
-void first_node(int size, int adj[size][size], int numtasks, int rank){
+void first_node(int size, int adj[size][size], int numtasks, int rank, int** first_mins, int** second_mins){
 
 	int curr_path[size+1]; 
  	memset(curr_path, -1, sizeof(curr_path));
@@ -137,11 +103,10 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 	visited[0] = 1; 
 
 	int init_bound = 0; 
-  
-	init_bound = firstMin(size, adj, 0);
-
+  	init_bound = *(*first_mins);
+  	
 	for (int i = 1; i < size; i++) {
-		init_bound += (firstMin(size, adj, i) + secondMin(size, adj, i)); 
+		init_bound += *(*first_mins + i) + *(*second_mins + i); 
 	}
 
 	if(init_bound == 1){
@@ -215,15 +180,31 @@ void first_node(int size, int adj[size][size], int numtasks, int rank){
 	//Share all possible second nodes to each processor 
 	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-	//printf("Received is %d and seconds are %d\n",sizeof(recv_second)/4, sizeof(seconds)/4 );
-	for(int i = 0;i < recv_size;i++){
-		printf("Got %d in rank %d\n", recv_second[i], rank);
-	
-	}
-
 	int curr_bound = init_bound;
 
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, rank); 
+	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, rank, first_mins, second_mins); 
+
+}
+
+void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size]){
+
+	for(int i = 0; i < size; i++){
+		*(*first_mins + i) = INT_MAX;
+		*(*second_mins + i) = INT_MAX;
+
+		for (int j = 0; j < size; j++){ 
+				if (i != j) { 
+
+					if (adj[i][j] <= *(*first_mins + i)){ 
+						*(*second_mins + i) = *(*first_mins + i); 
+						*(*first_mins + i) = adj[i][j]; 
+					} 
+					else if (adj[i][j] <= *(*second_mins + i)) 
+						*(*second_mins + i) = adj[i][j]; 
+				}
+		}
+
+	}
 
 }
 
@@ -279,10 +260,13 @@ int main(int argc, char *argv[]){
 	clock_t begin = clock();
 
 	
-	//Starting time of solution
+	//Get first_min and second_min as two arays instead of calling them each time 
+	int *first_mins = malloc(size * sizeof(int));
+	int *second_mins = malloc(size * sizeof(int));
+	find_mins(size, &first_mins, &second_mins, adj);
 
 	// This is the only function of the solution in main. Everything else is into this
-	first_node(size, adj, numtasks, rank);
+	first_node(size, adj, numtasks, rank, &first_mins, &second_mins);
 
 	int finals[numtasks];
 
