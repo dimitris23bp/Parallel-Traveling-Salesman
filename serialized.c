@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include <limits.h>
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "matrix_generator.h"
 #include "common_functions.h"
@@ -10,7 +10,6 @@
 #define N 20
 
 unsigned int *final_path;
-unsigned int final_res = UINT_MAX; 
   
 void recursion(
 	int size, 
@@ -21,7 +20,7 @@ void recursion(
 	int curr_path[size+1], 
 	int visited[size], 
 	int **first_mins, int **second_mins){ 
-	
+
 	if (level == size){ 
 
 		if (adj[curr_path[level - 1]][curr_path[0]] != 0){ 
