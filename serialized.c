@@ -1,7 +1,52 @@
 #include <time.h>
+#include<argp.h>
 
 #include "matrix_generator.h"
 #include "common_functions.h"
+
+#define SIZE 15
+
+const char *argp_program_version = "Travelling-Salesname 0.1";
+const char *argp_program_bug_address = "<dimitris23bp@gmail.com>";
+static char doc[] = "My program description.";
+static char args_doc[] = "[FILENAME]...";
+static struct argp_option options[] = { 
+    { "read",	'r',	0, 0, "Read from file" },
+    { "write",	'w',	0, 0, "Write to file" },
+    { "size",	's',	"da_size", 0, "Specific size of the array" },
+    { "file",	'f',	"file_name", 0, "Specific name of the file" },
+    { 0 } 
+};
+
+struct arguments {
+	char* file_name;
+    enum { READ_MODE, WRITE_MODE } mode;
+	int size;
+    char* option;
+};
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+    struct arguments *arguments = state->input;
+    switch (key) {
+    case 'r':
+       	arguments->mode = READ_MODE;
+    	break;
+    case 'w':
+       	arguments->mode = WRITE_MODE;
+    	break;
+    case 's':
+    	arguments->size = atoi(arg);
+    	break;
+    case 'f':
+    	arguments->file_name = arg;
+    case ARGP_KEY_ARG: return 0;
+    default: return ARGP_ERR_UNKNOWN;
+    }   
+    return 0;
+}
+
+static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
+
   
 void recursion(
 	int size, 
@@ -112,51 +157,44 @@ void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size
 }
 
 
-int main(int argc, char const *argv[]){
+int main(int argc, char *argv[]){
 
-	int size = N;
-	char option = 'w';
+    struct arguments arguments;
 
-	if(argc == 2){
-		option = argv[1][0];
-		if(option == 'r'){
-			size = get_size_of_matrix();
-		}
-	} else if( argc == 3){
-		option = argv[1][0];
-		size = atoi(argv[2]);
-	}
+	arguments.size = SIZE;
+	arguments.mode = WRITE_MODE;
+    arguments.file_name = "example-arrays/file01.txt";
 
-	int adj[size][size];
+    argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-	final_path = (int *)malloc(size * sizeof(int));
-	
+    int adj[arguments.size][arguments.size];
 
-	if(option == 'w'){
-		generator(size, adj, 50, 99);
-		write_to_file(size, adj);
-	} else if(option == 'r'){
-		read_from_file(size, adj);
-	} else{
-		return 0;
-	}
+    if(arguments.mode == WRITE_MODE){
+		generator(arguments.size, adj, 50, 99);
+		write_to_file(arguments.size, adj, arguments.file_name);
+    }else{
+		arguments.size = get_size_of_matrix(arguments.file_name);
+		read_from_file(arguments.size, adj, arguments.file_name);
+    }
 
-	display(size, adj);
+    display(arguments.size, adj);
+
+	final_path = (int *)malloc(arguments.size * sizeof(int));
 
 	//Starting time of solution
 	clock_t begin = clock();
 
 	//Get first_min and second_min as two arays instead of calling them each time 
-	int *first_mins = malloc(size * sizeof(int));
-	int *second_mins = malloc(size * sizeof(int));
-	find_mins(size, &first_mins, &second_mins, adj);
+	int *first_mins = malloc(arguments.size * sizeof(int));
+	int *second_mins = malloc(arguments.size * sizeof(int));
+	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
 
-	first_node(size, adj, &first_mins, &second_mins);
+	first_node(arguments.size, adj, &first_mins, &second_mins);
    	 
     printf("Minimum cost : %d\n", final_res); 
 	printf("Path Taken : "); 
-	for (int i = 0; i <= size; i++){ 
+	for (int i = 0; i <= arguments.size; i++){ 
 		printf("%d ", final_path[i]); 
 	} 
 

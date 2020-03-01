@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define FILE_NAME "example-arrays/file03.txt"
-
 /*
 This is the function that is going to create arrays of any size
 Weights are totally random
@@ -16,6 +14,7 @@ void generator(int size, int (*adj)[size], int min_distance, int max_distance){
 
 	//Initializion for rand();
 	srand(time(NULL));
+
 
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
@@ -43,6 +42,7 @@ void display(int size, int (*adj)[size]){
 		for(int j = 0; j < size; j++){
 
 			curr_num = *(*(adj + i) + j);
+
 			if(curr_num < 10){
 				printf("%d   ", *(*(adj + i) + j ));
 			} else if(curr_num < 100){
@@ -57,10 +57,10 @@ void display(int size, int (*adj)[size]){
 
 }
 
-void write_to_file(int size, int (*adj)[size]){
+void write_to_file(int size, int (*adj)[size], char* file_name){
 
 	FILE *file;
-	file = fopen(FILE_NAME, "w+");
+	file = fopen(file_name, "w+");
 
 	//Add size in first row of the file
 	fprintf(file,"%d\n", size);
@@ -77,9 +77,11 @@ void write_to_file(int size, int (*adj)[size]){
 
 }
 
-void read_from_file(int size, int (*adj)[size]){
+void read_from_file(int size, int (*adj)[size], char* file_name){
 	FILE *file;
-	file = fopen(FILE_NAME, "r");
+	file = fopen(file_name, "r");
+
+	printf("%s\n",file_name );
 
 	int num = 0;
 	int i = 0;
@@ -90,9 +92,8 @@ void read_from_file(int size, int (*adj)[size]){
 	while (!feof (file)){  
 		fscanf (file, "%d", &num);      
 		*(*(adj + i) + j) = num;
-
 		j++;
-		
+
 		if(j == size){
 			if(i == size){
 				break;
@@ -108,10 +109,10 @@ void read_from_file(int size, int (*adj)[size]){
 
 }
 
-int get_size_of_matrix(){
+int get_size_of_matrix(char* file_name){
 
 	FILE *file;
-	file = fopen(FILE_NAME, "r");
+	file = fopen(file_name, "r");
 	
 	int size = 0;
 
