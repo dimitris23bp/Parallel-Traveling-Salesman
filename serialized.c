@@ -137,8 +137,6 @@ void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size
 
 int main(int argc, char *argv[]){
 
-	printf("%s\n",argp_program_version );
-
     struct arguments arguments;
 
 	arguments.size = SIZE;
