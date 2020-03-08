@@ -8,8 +8,8 @@ all: openmp_simple serialized openmp_tasks mpi
 openmp_simple: openmp_simple.c matrix_generator.h common_functions.h
 	$(CC) -o openmp_simple openmp_simple.c $(INCLUDED_FILES) $(CFLAGS)
 
-serialized: serialized.c matrix_generator.h common_functions.h
-	$(CC) -o serialized serialized.c $(INCLUDED_FILES) 
+serialized: serialized.c matrix_generator.h common_functions.h arguments.h
+	$(CC) -o serialized serialized.c $(INCLUDED_FILES)
 
 openmp_tasks: openmp_tasks.c matrix_generator.h common_functions.h
 	$(CC) -o openmp_tasks openmp_tasks.c $(INCLUDED_FILES) $(CFLAGS)

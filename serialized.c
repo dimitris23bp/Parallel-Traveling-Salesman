@@ -1,29 +1,10 @@
 #include <time.h>
-#include<argp.h>
 
 #include "matrix_generator.h"
 #include "common_functions.h"
+#include "arguments.h"
 
 #define SIZE 15
-
-const char *argp_program_version = "Travelling-Salesname 0.1";
-const char *argp_program_bug_address = "<dimitris23bp@gmail.com>";
-static char doc[] = "My program description.";
-static char args_doc[] = "[FILENAME]...";
-static struct argp_option options[] = { 
-    { "read",	'r',	0, 0, "Read from file" },
-    { "write",	'w',	0, 0, "Write to file" },
-    { "size",	's',	"da_size", 0, "Specific size of the array" },
-    { "file",	'f',	"file_name", 0, "Specific name of the file" },
-    { 0 } 
-};
-
-struct arguments {
-	char* file_name;
-    enum { READ_MODE, WRITE_MODE } mode;
-	int size;
-    char* option;
-};
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
@@ -45,9 +26,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     return 0;
 }
 
-static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
-
-  
 void recursion(
 	int size, 
 	int adj[size][size], 
@@ -159,6 +137,8 @@ void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size
 
 int main(int argc, char *argv[]){
 
+	printf("%s\n",argp_program_version );
+
     struct arguments arguments;
 
 	arguments.size = SIZE;
@@ -192,18 +172,18 @@ int main(int argc, char *argv[]){
 
 	first_node(arguments.size, adj, &first_mins, &second_mins);
    	 
-    printf("Minimum cost : %d\n", final_res); 
-	printf("Path Taken : "); 
-	for (int i = 0; i <= arguments.size; i++){ 
-		printf("%d ", final_path[i]); 
-	} 
+    printf("%d ", final_res); 
+	// printf("Path Taken : "); 
+	// for (int i = 0; i <= arguments.size; i++){ 
+	// 	printf("%d ", final_path[i]); 
+	// } 
 
-	printf("\n");
+	//printf("\n");
 
 	clock_t end = clock();
 	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-	printf("Time spent: %f\n", time_spent);
+	printf("%f\n", time_spent);
 
 
 	return 0;

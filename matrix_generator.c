@@ -78,10 +78,9 @@ void write_to_file(int size, int (*adj)[size], char* file_name){
 }
 
 void read_from_file(int size, int (*adj)[size], char* file_name){
+
 	FILE *file;
 	file = fopen(file_name, "r");
-
-	printf("%s\n",file_name );
 
 	int num = 0;
 	int i = 0;
