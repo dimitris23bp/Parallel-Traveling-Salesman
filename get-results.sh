@@ -4,10 +4,22 @@
 make
 
 
-for size in {10..20}
+for size in {10..17}
 do
-	./openmp_simple -ws $size -t 8
-	echo "$size is done"
+
+	echo "Starting size $size"
+
+	./serialized -ws $size
+	echo "1 thread is done for size $size"
+
+	for num_of_threads in 2 4 8
+	do
+		./openmp_simple -r -t $num_of_threads
+		echo "$num_of_threads threads are done for size $size"
+	done
+
+	echo "$size size is done"
+
 done
 
 echo "Done"
