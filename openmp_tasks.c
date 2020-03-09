@@ -5,26 +5,29 @@
 #include "arguments.h"
 
 #define SIZE 15
-#define NUM_OF_THREADS 8
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
-    struct arguments *arguments = state->input;
-    switch (key) {
-    case 'r':
-       	arguments->mode = READ_MODE;
-    	break;
-    case 'w':
-       	arguments->mode = WRITE_MODE;
-    	break;
-    case 's':
-    	arguments->size = atoi(arg);
-    	break;
-    case 'f':
-    	arguments->file_name = arg;
-    case ARGP_KEY_ARG: return 0;
-    default: return ARGP_ERR_UNKNOWN;
-    }   
-    return 0;
+	struct arguments *arguments = state->input;
+	switch (key) {
+	case 'r':
+		arguments->mode = READ_MODE;
+		break;
+	case 'w':
+		arguments->mode = WRITE_MODE;
+		break;
+	case 's':
+		arguments->size = atoi(arg);
+		break;
+	case 'f':
+		arguments->file_name = arg;
+		break;
+	case 't':
+		arguments->num_of_threads = atoi(arg);
+		break;
+	case ARGP_KEY_ARG: return 0;
+	default: return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
 }
 
 void recursion(
@@ -107,9 +110,10 @@ void second_node(
 
 }
 
-void first_node(int size, int adj[size][size], int** first_mins, int** second_mins) {
+void first_node(int size, int adj[size][size], int** first_mins, int** second_mins, int num_of_threads) {
 
 
+	printf("Into first node threads are %d\n",num_of_threads );
 	int init_bound = 0;
 	init_bound = *(*first_mins);
 
@@ -124,7 +128,7 @@ void first_node(int size, int adj[size][size], int** first_mins, int** second_mi
 	}
 
 
-	omp_set_num_threads(NUM_OF_THREADS);
+	omp_set_num_threads(num_of_threads);
 	#pragma omp parallel
 	{
 
@@ -187,8 +191,14 @@ int main(int argc, char *argv[]) {
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.num_of_threads = 8;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
+
+	//I need this to create the adj out of the scope of the below if statements
+	if (arguments.mode == READ_MODE) {
+		arguments.size = get_size_of_matrix(arguments.file_name);
+	}
 
 	int adj[arguments.size][arguments.size];
 
@@ -196,10 +206,10 @@ int main(int argc, char *argv[]) {
 		generator(arguments.size, adj, 50, 99);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
-		arguments.size = get_size_of_matrix(arguments.file_name);
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
+	printf("size in main is %d \n", arguments.size );
 
 	display(arguments.size, adj);
 
@@ -213,7 +223,7 @@ int main(int argc, char *argv[]) {
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
-	first_node(arguments.size, adj, &first_mins, &second_mins);
+	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
 
 	printf("Minimum cost : %d\n", final_res);
 	printf("Path Taken : ");

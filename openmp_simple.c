@@ -4,8 +4,7 @@
 #include "common_functions.h"
 #include "arguments.h"
 
-#define SIZE 15
-#define NUM_OF_THREADS 8
+#define SIZE 17
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
@@ -21,6 +20,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     	break;
     case 'f':
     	arguments->file_name = arg;
+    	break;
+	case 't':
+		arguments->num_of_threads = atoi(arg);
+		break;
     case ARGP_KEY_ARG: return 0;
     default: return ARGP_ERR_UNKNOWN;
     }   
@@ -83,8 +86,6 @@ void recursion(
 			//I THINK I need to turn that back
 			curr_path[level] = -1;
 
-			
-
 		}
 	}
 }
@@ -96,11 +97,12 @@ void second_node(
 	int curr_bound, 
 	int curr_path[size+1], 
 	int visited[size], 
-	int** first_mins, int** second_mins){
+	int** first_mins, int** second_mins,
+	int num_of_threads){
 
-
-	for (int j = omp_get_thread_num()+1; j < size; j+=NUM_OF_THREADS){
+	for (int j = omp_get_thread_num()+1; j < size; j+=num_of_threads){
 		
+
 		int temp = curr_bound; 
 		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2); 
   			
@@ -118,7 +120,7 @@ void second_node(
 
 }
   
-void first_node(int size, int adj[size][size], int **first_mins, int **second_mins){
+void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, int num_of_threads){
 
 
 	int init_bound = 0; 
@@ -135,7 +137,7 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 	}
   
 
-	omp_set_num_threads(NUM_OF_THREADS);
+	omp_set_num_threads(num_of_threads);
 	#pragma omp parallel firstprivate(init_bound)
 	{
 		//Declare curr_path and set it to start from 0 node
@@ -150,7 +152,7 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 
 	 	int curr_bound = init_bound;
 
-		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins); 
+		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads); 
 
 	}
 
@@ -186,8 +188,14 @@ int main(int argc, char *argv[]){
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.num_of_threads = 8;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
+
+	//I need this to create the adj out of the scope of the below if statements
+	if (arguments.mode == READ_MODE) {
+		arguments.size = get_size_of_matrix(arguments.file_name);
+	}
 
 	int adj[arguments.size][arguments.size];
 
@@ -195,11 +203,10 @@ int main(int argc, char *argv[]){
 		generator(arguments.size, adj, 50, 99);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
-		arguments.size = get_size_of_matrix(arguments.file_name);
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	display(arguments.size, adj);
+	//display(arguments.size, adj);
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 	
@@ -211,20 +218,20 @@ int main(int argc, char *argv[]){
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
-	first_node(arguments.size, adj, &first_mins, &second_mins);
+	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
    	
-	printf("Minimum cost : %d\n", final_res); 
-	printf("Path Taken : "); 
-	for (int i = 0; i <= arguments.size; i++){ 
-		printf("%d ", final_path[i]); 
-	} 
+	// printf("Minimum cost : %d\n", final_res); 
+	// printf("Path Taken : "); 
+	// for (int i = 0; i <= arguments.size; i++){ 
+	// 	printf("%d ", final_path[i]); 
+	// } 
 
-	printf("\n");
+	// printf("\n");
 
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 
-	printf("Time spent: %f\n", finish - start);
+	printf("%f\n", finish - start);
 
 	return 0;
 }

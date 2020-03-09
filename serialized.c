@@ -145,15 +145,19 @@ int main(int argc, char *argv[]){
 
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-    int adj[arguments.size][arguments.size];
+	//I need this to create the adj out of the scope of the below if statements
+	if (arguments.mode == READ_MODE) {
+		arguments.size = get_size_of_matrix(arguments.file_name);
+	}
 
-    if(arguments.mode == WRITE_MODE){
+	int adj[arguments.size][arguments.size];
+
+	if (arguments.mode == WRITE_MODE) {
 		generator(arguments.size, adj, 50, 99);
 		write_to_file(arguments.size, adj, arguments.file_name);
-    }else{
-		arguments.size = get_size_of_matrix(arguments.file_name);
+	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
-    }
+	}
 
     display(arguments.size, adj);
 

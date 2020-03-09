@@ -16,6 +16,7 @@ static struct argp_option options[] = {
     { "write",	'w',	0, 0, "Write to file" },
     { "size",	's',	"da_size", 0, "Specific size of the array" },
     { "file",	'f',	"file_name", 0, "Specific name of the file" },
+    { "threads",'t',	"number of threads", 0, "NUmber of threads for parallel solutions"},
     { 0 } 
 };
 
@@ -24,6 +25,7 @@ typedef struct arguments {
     enum { READ_MODE, WRITE_MODE } mode;
 	int size;
     char* option;
+    int num_of_threads;
 } arguments;
 
 
