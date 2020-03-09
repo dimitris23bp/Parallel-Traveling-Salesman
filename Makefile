@@ -5,16 +5,16 @@ INCLUDED_FILES= common_functions.c matrix_generator.c
 
 all: openmp_simple serialized openmp_tasks mpi
 
-openmp_simple: openmp_simple.c matrix_generator.h common_functions.h arguments.h
+openmp_simple: openmp_simple.c matrix_generator.h common_functions.h arguments.h common_functions.c matrix_generator.c
 	$(CC) -o openmp_simple openmp_simple.c $(INCLUDED_FILES) $(CFLAGS)
 
-serialized: serialized.c matrix_generator.h common_functions.h arguments.h
+serialized: serialized.c matrix_generator.h common_functions.h arguments.h common_functions.c matrix_generator.c
 	$(CC) -o serialized serialized.c $(INCLUDED_FILES)
 
-openmp_tasks: openmp_tasks.c matrix_generator.h common_functions.h arguments.h
+openmp_tasks: openmp_tasks.c matrix_generator.h common_functions.h arguments.h common_functions.c matrix_generator.c
 	$(CC) -o openmp_tasks openmp_tasks.c $(INCLUDED_FILES) $(CFLAGS)
 
-mpi: mpi_implementation.c matrix_generator.h common_functions.h arguments.h
+mpi: mpi_implementation.c matrix_generator.h common_functions.h arguments.h common_functions.c matrix_generator.c
 	$(MPICC) -o mpi mpi_implementation.c $(INCLUDED_FILES)
 
 clean:
