@@ -5,8 +5,6 @@
 #include "common_functions.h"
 #include "arguments.h"
 
-#define SIZE 15
-
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
     switch (key) {
@@ -165,7 +163,6 @@ void first_node(
 		int diafora = size % numtasks - 1;
 
 
-
 		// Calculate how_many_each
 		for (int i = 0; i < numtasks; i++) {
 			how_many_each[i] = baseline_of_seconds;
@@ -257,10 +254,6 @@ int main(int argc, char *argv[]) {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	if (rank == 0) {
-		display(arguments.size, adj);
-	}
-
 	// I add one more because of a corrupted size vs. prev_size error. Probably needs it to store \0 byte at the end
 	final_path = (int*) malloc(arguments.size * sizeof(int) + 1);
 
@@ -274,6 +267,7 @@ int main(int argc, char *argv[]) {
 
 	//Starting time of solution
 	clock_t begin = clock();
+	double time = MPI_Wtime();
 
 
 	//Get first_min and second_min as two arays instead of calling them each time
@@ -283,6 +277,9 @@ int main(int argc, char *argv[]) {
 
 	// This is the only function of the solution in main. Everything else is into this
 	first_node(arguments.size, adj, numtasks, rank, &first_mins, &second_mins);
+
+	time = MPI_Wtime() - time;
+	printf("%f with rank %d\n",time, rank );
 
 	int finals[numtasks];
 
@@ -325,18 +322,11 @@ int main(int argc, char *argv[]) {
 
 	// Display minimum cost and the path of it
 	if (rank == 0) {
-		printf("Minimum cost : %d\n", final_res);
-		printf("Path Taken : ");
-		for (int i = 0; i <= arguments.size; i++) {
-			printf("%d ", final_path[i]);
-		}
-
-		printf("\n");
 
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-		printf("Time spent: %f\n", time_spent);
+		printf("%d %d %f\n",arguments.num_of_threads, arguments.size, time_spent);
 
 	}
 

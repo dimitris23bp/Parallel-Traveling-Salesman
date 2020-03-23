@@ -4,8 +4,6 @@
 #include "common_functions.h"
 #include "arguments.h"
 
-#define SIZE 15
-
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 	struct arguments *arguments = state->input;
 	switch (key) {
@@ -55,8 +53,6 @@ void recursion(
 		return;
 
 	}
-
-
 	for (int i = 1; i < size; i++) {
 		if (adj[curr_path[level - 1]][i] != 0 && visited[i] == 0) {
 			int temp = curr_bound;
@@ -85,6 +81,7 @@ void recursion(
 
 		}
 	}
+	
 }
 
 
@@ -97,11 +94,7 @@ void second_node(
     int j,
     int** first_mins, int** second_mins) {
 
-	int temp = curr_bound;
-
-
 	curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + j)) / 2);
-
 	curr_path[1] = j;
 	visited[j] = 1;
 
@@ -112,8 +105,6 @@ void second_node(
 
 void first_node(int size, int adj[size][size], int** first_mins, int** second_mins, int num_of_threads) {
 
-
-	printf("Into first node threads are %d\n",num_of_threads );
 	int init_bound = 0;
 	init_bound = *(*first_mins);
 
@@ -127,12 +118,11 @@ void first_node(int size, int adj[size][size], int** first_mins, int** second_mi
 		init_bound = init_bound / 2;
 	}
 
-
 	omp_set_num_threads(num_of_threads);
 	#pragma omp parallel
 	{
 
-		#pragma omp single
+		#pragma omp single nowait
 		{
 			for (int j = 1; j < size; j++) {
 
@@ -150,16 +140,10 @@ void first_node(int size, int adj[size][size], int** first_mins, int** second_mi
 
 					int curr_bound = init_bound;
 					second_node(size, adj, curr_bound, curr_path, visited, j, first_mins, second_mins);
-
-
 				}
-
-
 			}
 		}
-
 	}
-
 }
 
 void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size]) {
@@ -209,9 +193,7 @@ int main(int argc, char *argv[]) {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	printf("size in main is %d \n", arguments.size );
-
-	display(arguments.size, adj);
+	//display(arguments.size, adj);
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 
@@ -225,18 +207,10 @@ int main(int argc, char *argv[]) {
 
 	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
 
-	printf("Minimum cost : %d\n", final_res);
-	printf("Path Taken : ");
-	for (int i = 0; i <= arguments.size; i++) {
-		printf("%d ", final_path[i]);
-	}
-
-	printf("\n");
-
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 
-	printf("Time spent: %f\n", finish - start);
+	printf("%d %d %f\n",arguments.num_of_threads, arguments.size, finish - start);
 
 	return 0;
 }

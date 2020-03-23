@@ -4,8 +4,6 @@
 #include "common_functions.h"
 #include "arguments.h"
 
-#define SIZE 17
-
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
     switch (key) {
@@ -60,7 +58,6 @@ void recursion(
 		return;
 	} 
 
-
 	for (int i = 1; i < size; i++){ 
 		if (adj[curr_path[level-1]][i] != 0 && visited[i] == 0){
 
@@ -100,8 +97,7 @@ void second_node(
 	int** first_mins, int** second_mins,
 	int num_of_threads){
 
-	for (int j = omp_get_thread_num()+1; j < size; j+=num_of_threads){
-		
+	for (int j = omp_get_thread_num()+1; j < size; j+=num_of_threads){		
 
 		int temp = curr_bound; 
 		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2); 
@@ -116,7 +112,6 @@ void second_node(
  		visited[0] = 1;
 
 	}
-
 
 }
   
@@ -206,8 +201,6 @@ int main(int argc, char *argv[]){
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	//display(arguments.size, adj);
-
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 	
 	//Starting time of solution
@@ -220,18 +213,10 @@ int main(int argc, char *argv[]){
 
 	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
    	
-	// printf("Minimum cost : %d\n", final_res); 
-	// printf("Path Taken : "); 
-	// for (int i = 0; i <= arguments.size; i++){ 
-	// 	printf("%d ", final_path[i]); 
-	// } 
-
-	// printf("\n");
-
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 
-	printf("%f\n", finish - start);
+	printf("%d %d %f\n",arguments.num_of_threads, arguments.size, finish - start);
 
 	return 0;
 }

@@ -4,8 +4,6 @@
 #include "common_functions.h"
 #include "arguments.h"
 
-#define SIZE 15
-
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
     switch (key) {
@@ -38,21 +36,19 @@ void recursion(
 
 	if (level == size){ 
 
-		if (adj[curr_path[level - 1]][curr_path[0]] != 0){ 
+		//if (adj[curr_path[level - 1]][curr_path[0]] != 0){ 
 			int curr_res = curr_weight + adj[curr_path[level-1]][curr_path[0]]; 
 			
-
 			if (curr_res < final_res){ 
 				copy_to_final(size, curr_path, final_path); 
 				final_res = curr_res; 
 
-			} 
-		} 			
+			}
+		//} 			
 
 		return; 
 		
 	} 
-  
 	for (int i = 1; i < size; i++){ 
 		if (adj[curr_path[level-1]][i] != 0 && visited[i] == 0){ 
 			int temp = curr_bound; 
@@ -60,7 +56,7 @@ void recursion(
   
 			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + *(*first_mins + i))/2); 
   			
-			if (curr_bound + curr_weight <= final_res){ 
+			if (curr_bound + curr_weight < final_res){ 
 				curr_path[level] = i; 
 				visited[i] = 1; 
   
@@ -159,7 +155,7 @@ int main(int argc, char *argv[]){
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-    display(arguments.size, adj);
+    //display(arguments.size, adj);
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 
@@ -171,21 +167,12 @@ int main(int argc, char *argv[]){
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
-
 	first_node(arguments.size, adj, &first_mins, &second_mins);
    	 
-    printf("%d ", final_res); 
-	// printf("Path Taken : "); 
-	// for (int i = 0; i <= arguments.size; i++){ 
-	// 	printf("%d ", final_path[i]); 
-	// } 
-
-	//printf("\n");
-
 	clock_t end = clock();
 	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-	printf("%f\n", time_spent);
+	printf("1 %d %f\n",arguments.size, time_spent);
 
 
 	return 0;
