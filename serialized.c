@@ -1,8 +1,8 @@
 #include <time.h>
 
-#include "matrix_generator.h"
-#include "common_functions.h"
-#include "arguments.h"
+#include "headers/matrix_generator.h"
+#include "headers/common_functions.h"
+#include "headers/arguments.h"
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
