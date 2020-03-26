@@ -4,6 +4,10 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
+/*
+* parse_opt is a function required by Argp library
+* Every case is a different argument
+*/
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
     switch (key) {
@@ -28,62 +32,68 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     return 0;
 }
 
+/*
+* Recursion is the main function that gets accessed for almost every node
+* (except for first and second node)
+*/
 void recursion(
-	int size, 
-	int adj[size][size], 
-	int curr_bound, 
-	int curr_weight, 
-	int level, 
-	int curr_path[size+1], 
-	int visited[size], 
-	int** first_mins, int** second_mins){ 
+    int size,
+    int adj[size][size],
+    int curr_bound,
+    int curr_weight,
+    int level,
+    int curr_path[size + 1],
+    int visited[size],
+    int** first_mins, int** second_mins) {
 
-	if (level == size){ 
+	// If every node has been visited
+	if (level == size) {
 
-		//I don't think this will ever be 0
-		if (adj[curr_path[level - 1]][curr_path[0]] != 0){ 
-			int curr_res = curr_weight + adj[curr_path[level-1]][curr_path[0]]; 
-	  
-	  		#pragma omp critical
-			{
+		int curr_res = curr_weight + adj[curr_path[level - 1]][curr_path[0]];
 
-				if (curr_res < final_res){ 
-					copy_to_final(size, curr_path, final_path); 
-					final_res = curr_res;
-
-				} 
-			}	
+		#pragma omp critical
+		{
+			// If my current result is less than the best so far 
+			// Copy current into best (result and path too)
+			if (curr_res < final_res) {
+				copy_to_final(size, curr_path, final_path);
+				final_res = curr_res;
+			}
 		}
 
 		return;
-	} 
+	}
 
+	// Go through every node
+	for (int i = 1; i < size; i++) {
 
-	for (int i = 1; i < size; i++){ 
-		if (adj[curr_path[level-1]][i] != 0 && visited[i] == 0){
+		// Check if the node has been visited
+		if (visited[i] == 0) {
 
-			int temp = curr_bound; 
-			curr_weight += adj[curr_path[level - 1]][i]; 
-			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + *(*first_mins + i))/2); 
+			// Change variables due to the next visiting
+			int temp = curr_bound;
+			curr_weight += adj[curr_path[level - 1]][i];
+			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 
-			if (curr_bound + curr_weight < final_res){ 
-				curr_path[level] = i; 
-				visited[i] = 1; 
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins); 
+			// If current result is less than the bound
+			if (curr_bound + curr_weight < final_res) {
+				curr_path[level] = i;
+				visited[i] = 1;
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
+			}
 
-			} 
+			// Restore variables back to normal
+			// Before the current node had been visited
+			curr_bound = temp;
+			curr_weight -= adj[curr_path[level - 1]][i];
+			visited[i] = 0;
 
-			curr_weight -= adj[curr_path[level-1]][i]; 
-			curr_bound = temp; 
-		  	
- 			memset(visited, 0, sizeof(int)*size);
-			for (int j = 0; j <= level - 1; j++) {
-				visited[curr_path[j]] = 1; 
-			}	
-
-			//I THINK I need to turn that back
-			curr_path[level] = -1;
-
+			// If uncommented, the current path is not always correct during execution
+			// Because it contains previous paths (before backtracking)
+			// The outcome is always the same
+			// Every other variable is necessary to change because their values are being compared
+			// I keep it for the better understanding of the program
+			//curr_path[level] = -1;
 		}
 	}
 }
@@ -219,6 +229,8 @@ int main(int argc, char *argv[]){
    	
 	//Finishing time of solution
 	double finish = omp_get_wtime();
+
+	printf("%d\n",final_res );
 
 	printf("%d %d %f\n",arguments.num_of_threads, arguments.size, finish - start);
 
