@@ -18,7 +18,7 @@ openmp_simple: openmp_simple.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 openmp_tasks: openmp_tasks.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_tasks openmp_tasks.c $(INCLUDED_FILES) $(CFLAGS)
 
-openmp_schedule: openmp_tasks.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+openmp_schedule: openmp_simple_schedule.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_schedule openmp_simple_schedule.c $(INCLUDED_FILES) $(CFLAGS)
 
 mpi: mpi_implementation.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
