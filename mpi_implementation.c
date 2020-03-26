@@ -213,29 +213,6 @@ void first_node(
 
 }
 
-void find_mins(int size, int **first_mins, int **second_mins, int adj[size][size]) {
-
-	for (int i = 0; i < size; i++) {
-		*(*first_mins + i) = INT_MAX;
-		*(*second_mins + i) = INT_MAX;
-
-		for (int j = 0; j < size; j++) {
-			if (i != j) {
-
-				if (adj[i][j] <= *(*first_mins + i)) {
-					*(*second_mins + i) = *(*first_mins + i);
-					*(*first_mins + i) = adj[i][j];
-				}
-				else if (adj[i][j] <= *(*second_mins + i))
-					*(*second_mins + i) = adj[i][j];
-			}
-		}
-
-	}
-
-}
-
-
 int main(int argc, char *argv[]) {
 
 	int rank, numtasks;
