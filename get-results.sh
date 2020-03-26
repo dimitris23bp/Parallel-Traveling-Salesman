@@ -3,22 +3,23 @@
 #Get the latest compiled version
 make
 
-for size in {1..17}
+rm results.txt 2> /dev/null
+touch results.txt
+
+for size in {11..15}
 do
 
 	echo "Starting size $size"
 
-	./serialized -ws $size
+	./serialized -ws $size >> results.txt 
 
-	for num in 2 4 8
+	for num in 2 3 4
 	do
-		./openmp_simple -r -t $num
+		./openmp_simple -r -t $num >> results.txt
 
 		#mpiexec -np $num ./mpi -r
 
 	done
-
-	echo "$size size is done"
 
 done
 

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <limits.h>
 
-#define N 20
+#define SIZE 17
 
 unsigned int final_res = UINT_MAX; 
 unsigned int *final_path;

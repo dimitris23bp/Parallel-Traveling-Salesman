@@ -53,6 +53,7 @@ void recursion(
 		return;
 
 	}
+
 	for (int i = 1; i < size; i++) {
 		if (adj[curr_path[level - 1]][i] != 0 && visited[i] == 0) {
 			int temp = curr_bound;
@@ -81,7 +82,7 @@ void recursion(
 
 		}
 	}
-	
+
 }
 
 
@@ -210,7 +211,18 @@ int main(int argc, char *argv[]) {
 	//Finishing time of solution
 	double finish = omp_get_wtime();
 
-	printf("%d %d %f\n",arguments.num_of_threads, arguments.size, finish - start);
+
+	printf("Minimum cost : %d\n", final_res);
+	printf("Path Taken : ");
+	for (int i = 0; i <= arguments.size; i++) {
+		printf("%d ", final_path[i]);
+	}
+
+	printf("\n");
+
+
+
+	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, finish - start);
 
 	return 0;
 }

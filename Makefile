@@ -1,8 +1,10 @@
 CC=gcc
 CFLAGS = -fopenmp
 MPICC=mpicc
+vpath %.h headers
 INCLUDED_FILES= common_functions.c matrix_generator.c
-INCLUDES_HEADERS= headers/matrix_generator.h headers/common_functions.h headers/arguments.h
+INCLUDES_HEADERS= matrix_generator.h common_functions.h arguments.h
+
 all:  serialized openmp mpi
 
 openmp: openmp_simple openmp_tasks openmp_schedule 
@@ -24,3 +26,4 @@ mpi: mpi_implementation.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 
 clean:
 	rm openmp_simple serialized openmp_tasks mpi openmp_schedule
+
