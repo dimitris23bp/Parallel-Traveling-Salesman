@@ -124,9 +124,12 @@ int main(int argc, char *argv[]) {
 
 	struct arguments arguments;
 
+	// Default values for arguments
+	// In case some of them are not initialized by user's arguments
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.num_of_threads = 8;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -137,6 +140,7 @@ int main(int argc, char *argv[]) {
 
 	int adj[arguments.size][arguments.size];
 
+	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
 		generator(arguments.size, adj, 50, 99);
 		write_to_file(arguments.size, adj, arguments.file_name);
@@ -144,25 +148,26 @@ int main(int argc, char *argv[]) {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	//display(arguments.size, adj);
-
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 
 	//Starting time of solution
 	clock_t begin = clock();
 
-	//Get first_min and second_min as two arays instead of calling them each time
+	//Get first_min and second_min as two arrays instead of calling them every time I need them
 	int *first_mins = malloc(arguments.size * sizeof(int));
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
+	// Start the actual algorithm
 	first_node(arguments.size, adj, &first_mins, &second_mins);
 
-	clock_t end = clock();
-	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+	double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+
+	for (int i = 0; i < arguments.size; i++) {
+		printf("%d ", final_path[i] );
+	}
 
 	printf("1 %d %f\n", arguments.size, time_spent);
-
 
 	return 0;
 }

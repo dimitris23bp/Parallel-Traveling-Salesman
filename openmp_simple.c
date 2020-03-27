@@ -164,10 +164,19 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 
 }
 
+/*
+* Main function
+* The program starts from here
+* That's all...
+* What are you looking at?
+* Go!
+*/
 int main(int argc, char *argv[]) {
 
 	struct arguments arguments;
 
+	// Default values for arguments
+	// In case some of them are not initialized by user's arguments
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
@@ -182,6 +191,7 @@ int main(int argc, char *argv[]) {
 
 	int adj[arguments.size][arguments.size];
 
+	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
 		generator(arguments.size, adj, 50, 99);
 		write_to_file(arguments.size, adj, arguments.file_name);
@@ -192,30 +202,21 @@ int main(int argc, char *argv[]) {
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 
 	//Starting time of solution
-	double start = omp_get_wtime();
+	double start_time = omp_get_wtime();
 
-	//Get first_min and second_min as two arays instead of calling them each time
+	//Get first_min and second_min as two arrays instead of calling them every time I need them
 	int *first_mins = malloc(arguments.size * sizeof(int));
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
+	// Start the actual algorithm
 	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
 
-
-
-	printf("Minimum cost : %d\n", final_res);
-	printf("Path Taken : ");
-	for (int i = 0; i <= arguments.size; i++) {
-		printf("%d ", final_path[i]);
-	}
-
-	printf("\n");
-
-
 	//Finishing time of solution
-	double finish = omp_get_wtime();
+	double final_time = omp_get_wtime() - start_time;
 
-	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, finish - start);
+	// Print result so I can access them through the bash script
+	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, final_time);
 
 	return 0;
 }
