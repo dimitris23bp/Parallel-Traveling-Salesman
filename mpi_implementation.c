@@ -5,6 +5,8 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
+double master_time1, master_time2, worker_time1, worker_time2;
+double begin = 0;
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -41,7 +43,8 @@ void recursion(
     int level,
     int curr_path[size + 1],
     int visited[size],
-    int** first_mins, int** second_mins) {
+    int** first_mins, int** second_mins,
+    int rank) {
 
 	// If every node has been visited
 	if (level == size) {
@@ -73,7 +76,7 @@ void recursion(
 			if (curr_bound + curr_weight < final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins, rank);
 			}
 
 			// Restore variables back to normal
@@ -101,7 +104,8 @@ void second_node(
     int visited[size],
     int recv_size,
     int recv_second[recv_size],
-    int** first_mins, int** second_mins) {
+    int** first_mins, int** second_mins,
+    int 	rank) {
 
 	for (int i = 0; i < recv_size; i++) {
 		if (recv_second[i] != -1) {
@@ -112,7 +116,7 @@ void second_node(
 			curr_path[1] = recv_second[i];
 			visited[recv_second[i]] = 1;
 
-			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, first_mins, second_mins);
+			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, first_mins, second_mins, rank);
 
 			curr_bound = temp;
 			memset(visited, 0, sizeof(int)*size);
@@ -151,11 +155,13 @@ void first_node(
 	}
 
 
+
+	//ΜΠΟΡΕΙ ΝΑ ΦΥΓΕΙ ΤΟ ΙΦ ΚΑΙ ΝΑ ΜΕΙΝΕΙ ΜΟΝΟ ΤΟ ELSE ΓΙΑ ΠΙΟ ΚΑΛΑ, ΑΛΛΑ ΔΕΝ ΜΕ ΚΑΙΕΙ ΤΩΡΑ
 	int recv_size;
 	if ((size - 1) % numtasks == 0) {
 		recv_size = size / numtasks;
 	} else {
-		recv_size = (size / numtasks) + 1;
+		recv_size = ((size - 1) / numtasks) + 1;
 	}
 
 	//Second nodes that every proccessor will get
@@ -173,16 +179,16 @@ void first_node(
 		int baseline_of_seconds = size / numtasks;
 
 		// Minus 1, because I don't care about node number 0 (it is the root node)
-		int diafora = size % numtasks - 1;
-
+		int diafora = (size - 1) % numtasks;
 
 		// Calculate how_many_each
 		for (int i = 0; i < numtasks; i++) {
 			how_many_each[i] = baseline_of_seconds;
-			if (diafora != 0) {
+			if (diafora > 0) {
 				how_many_each[i]++;
 				diafora--;
 			}
+
 		}
 
 		int second_node = 1;
@@ -204,12 +210,21 @@ void first_node(
 
 	}
 
+	master_time1 = MPI_Wtime();
+
 	//Share all possible second nodes to each processor
 	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
 
 	int curr_bound = init_bound;
 
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, first_mins, second_mins);
+	worker_time1 = MPI_Wtime();
+
+	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, first_mins, second_mins, rank);
+
+	if (rank != 0) {
+		worker_time2 = MPI_Wtime();
+		printf("%f\n", worker_time2 - worker_time1 );
+	}
 
 }
 
@@ -218,7 +233,6 @@ int main(int argc, char *argv[]) {
 	int rank, numtasks;
 
 	MPI_Init(&argc, &argv);
-
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -254,11 +268,8 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 
-
 	//Starting time of solution
-	clock_t begin = clock();
-	double time = MPI_Wtime();
-
+	begin = MPI_Wtime();
 
 	//Get first_min and second_min as two arays instead of calling them each time
 	int *first_mins = malloc(arguments.size * sizeof(int));
@@ -267,9 +278,6 @@ int main(int argc, char *argv[]) {
 
 	// This is the only function of the solution in main. Everything else is into this
 	first_node(arguments.size, adj, numtasks, rank, &first_mins, &second_mins);
-
-	time = MPI_Wtime() - time;
-	printf("%f with rank %d\n", time, rank );
 
 	int finals[numtasks];
 
@@ -310,11 +318,26 @@ int main(int argc, char *argv[]) {
 
 	}
 
+	master_time2 = MPI_Wtime();
+
 	// Display minimum cost and the path of it
 	if (rank == 0) {
 
-		clock_t end = clock();
-		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		clock_t end = MPI_Wtime();
+		double time_spent = (double)(end - begin); /// CLOCKS_PER_SEC;
+
+		double master_time = master_time2 - master_time1;
+		double worker_time = worker_time2 - worker_time1;
+
+		printf("master time is %f\n", master_time );
+		printf("Worker time is %f\n", worker_time );
+
+		printf("Delay is %f\n", master_time - worker_time);
+
+		// for (int i = 0; i < arguments.size; i++) {
+		// 	printf("%d ", final_path[i] );
+		// }
+
 
 		printf("%d %d %f\n", arguments.num_of_threads, arguments.size, time_spent);
 
