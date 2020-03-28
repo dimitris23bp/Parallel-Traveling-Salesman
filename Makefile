@@ -7,7 +7,7 @@ INCLUDES_HEADERS= matrix_generator.h common_functions.h arguments.h
 
 all:  serialized openmp mpi
 
-openmp: openmp_simple openmp_tasks openmp_schedule 
+openmp: openmp_simple openmp_tasks openmp_schedule openmp_for
 
 serialized: serialized.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o serialized serialized.c $(INCLUDED_FILES)
@@ -21,9 +21,12 @@ openmp_tasks: openmp_tasks.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 openmp_schedule: openmp_simple_schedule.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_schedule openmp_simple_schedule.c $(INCLUDED_FILES) $(CFLAGS)
 
+openmp_for: openmp_for.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o openmp_for openmp_for.c $(INCLUDED_FILES) $(CFLAGS)
+
 mpi: mpi_implementation.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(MPICC) -o mpi mpi_implementation.c $(INCLUDED_FILES)
 
 clean:
-	rm openmp_simple serialized openmp_tasks mpi openmp_schedule
+	rm openmp_simple serialized openmp_tasks mpi openmp_schedule openmp_for
 
