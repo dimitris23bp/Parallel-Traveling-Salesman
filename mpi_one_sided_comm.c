@@ -6,6 +6,9 @@
 #include "headers/arguments.h"
 
 double begin = 0;
+int shared_size = 1;
+MPI_Win win;
+double lock_time = 0.0;
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -45,6 +48,8 @@ void recursion(
     int** first_mins, int** second_mins,
     int rank) {
 
+
+
 	// If every node has been visited
 	if (level == size) {
 
@@ -53,25 +58,24 @@ void recursion(
 		// If my current result is less than the best so far
 		// Copy current into best (result and path too)
 		if (curr_res < final_res) {
+
 			copy_to_final(size, curr_path, final_path);
 			final_res = curr_res;
+			MPI_Put(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
 		}
+
+
 
 		return;
 	}
 
+
+
 	// Go through every node
 	for (int i = 1; i < size; i++) {
 
-		//if (rank == 1)
-		//	printf("%d\n", curr_path[1] );
-
 		// Check if the node has been visited
 		if (visited[i] == 0) {
-
-			// if(rank == 1)
-			// 	printf("%d\n",curr_path[1] );
-
 
 			// Change variables due to the next visiting
 			int temp = curr_bound;
@@ -98,7 +102,11 @@ void recursion(
 			// I keep it for the better understanding of the program
 			//curr_path[level] = -1;
 		}
+
+
 	}
+	//MPI_Get(&final_res, shared_size, MPI_INT, 1, 0, shared_size, MPI_INT, win);
+
 }
 
 
@@ -115,7 +123,7 @@ void second_node(
 
 	for (int i = 0; i < recv_size; i++) {
 		if (recv_second[i] != -1) {
-	//MPI_Win_create(sharedbuffer, 5, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+			//MPI_Win_create(sharedbuffer, 5, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 			double start = MPI_Wtime();
 
@@ -125,35 +133,20 @@ void second_node(
 			curr_path[1] = recv_second[i];
 			visited[recv_second[i]] = 1;
 
-			//if(rank == 1)
-			//printf("In second nodes %d\n", curr_path[1] );
-
 			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, first_mins, second_mins, rank);
 
 			curr_bound = temp;
 			memset(visited, 0, sizeof(int)*size);
 			visited[0] = 1;
 
-			// if (rank == 1)
-				printf("Second: %d, time: %f\n", recv_second[i], MPI_Wtime() - start );
+			printf("Second: %d, time: %f\n", recv_second[i], MPI_Wtime() - start );
 
 
 		}
 
-		//All these happens because I have to communicate and change bounds now and then
-		int finals[4];
-
-		MPI_Barrier(MPI_COMM_WORLD);
-
-		MPI_Allgather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, MPI_COMM_WORLD);
-
-		for (int i = 0; i < 4; i++) {
-			if (finals[i] < final_res) {
-				final_res = finals[i];
-			}
-		}
 
 	}
+	MPI_Get(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
 
 }
 
@@ -263,10 +256,16 @@ void first_node(
 int main(int argc, char *argv[]) {
 
 	int rank, numtasks;
+	int sharedbuffer, localbuffer;
+
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	MPI_Win_create(&sharedbuffer, shared_size, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+	sharedbuffer = INT_MAX;
 
 	struct arguments arguments;
 
@@ -308,9 +307,11 @@ int main(int argc, char *argv[]) {
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
+
+	MPI_Win_fence(0, win);
 	// This is the only function of the solution in main. Everything else is into this
 	first_node(arguments.size, adj, numtasks, rank, &first_mins, &second_mins);
-
+	MPI_Win_fence(0, win);
 	int finals[numtasks];
 
 	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -350,8 +351,12 @@ int main(int argc, char *argv[]) {
 
 	}
 
+	printf("Lock time: %f\n", lock_time );
+
 	// Display minimum cost and the path of it
 	if (rank == 0) {
+
+		//MPI_Put(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
 
 		double end = MPI_Wtime();
 		double time_spent = (double)(end - begin);
@@ -361,12 +366,22 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
-		printf("%d\n",final_res );
+		printf("%d\n", final_res );
 
 		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
 
 	}
-
+	// //MPI_Barrier(MPI_COMM_WORLD);
+	// MPI_Win_fence(0, win);
+	// printf("Rank to insert: %d\n", rank);
+	// MPI_Win_lock_all(0, win);
+	// //for (int i = 0; i < 10; i++) {
+	// 	MPI_Get(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
+	// 	printf("Rank %d value %d\n", rank, final_res );
+	// //}
+	// MPI_Win_unlock_all(win);
+	// printf("Rank out: %d\n", rank);
+	// MPI_Win_fence(0, win);
 	MPI_Finalize();
 
 
