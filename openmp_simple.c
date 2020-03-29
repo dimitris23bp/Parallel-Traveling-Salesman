@@ -53,7 +53,7 @@ void recursion(
 
 		#pragma omp critical
 		{
-			// If my current result is less than the best so far 
+			// If my current result is less than the best so far
 			// Copy current into best (result and path too)
 			if (curr_res < final_res) {
 				copy_to_final(size, curr_path, final_path);
@@ -110,6 +110,8 @@ void second_node(
 
 	for (int j = omp_get_thread_num() + 1; j < size; j += num_of_threads) {
 
+		double start = omp_get_wtime();
+
 		int temp = curr_bound;
 		curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + j)) / 2);
 
@@ -121,6 +123,9 @@ void second_node(
 		curr_bound = temp;
 		memset(visited, 0, sizeof(*visited)*size);
 		visited[0] = 1;
+
+		printf("Second: %d, time: %f\n", j, omp_get_wtime() - start );
+
 
 	}
 

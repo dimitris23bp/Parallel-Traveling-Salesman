@@ -209,6 +209,10 @@ int main(int argc, char *argv[]) {
 	//Finishing time of solution
 	double final_time = omp_get_wtime() - start_time;
 
+	for(int i = 0; i <= arguments.size; i++){
+		printf("%d ",final_path[i] );
+	}
+	printf("\n");
 	// Print result so I can access them through the bash script
 	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, final_time);
 

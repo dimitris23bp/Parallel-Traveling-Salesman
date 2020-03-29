@@ -122,7 +122,7 @@ void second_node(
 
 		curr_bound = temp; 
 		//May be unnecessary
- 		memset(visited, 0, sizeof(*visited)*size);
+ 		memset(visited, 0, sizeof(int)*size);
  		visited[0] = 1;
 	}
 
