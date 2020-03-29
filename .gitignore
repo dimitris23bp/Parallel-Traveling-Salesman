@@ -3,4 +3,7 @@ openmp_simple
 openmp_tasks
 serialized
 slow-code/
-example-arrays/*
+example-arrays/
+*.txt
+*.odt
+*.pdf
