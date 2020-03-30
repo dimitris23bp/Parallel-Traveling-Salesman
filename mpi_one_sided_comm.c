@@ -6,7 +6,7 @@
 #include "headers/arguments.h"
 
 double begin = 0;
-int shared_size = 1;
+int shared_size = 2;
 MPI_Win win;
 double lock_time = 0.0;
 /*
@@ -48,10 +48,10 @@ void recursion(
     int** first_mins, int** second_mins,
     int rank) {
 
-
-
 	// If every node has been visited
 	if (level == size) {
+
+
 
 		int curr_res = curr_weight + adj[curr_path[level - 1]][curr_path[0]];
 
@@ -61,15 +61,29 @@ void recursion(
 
 			copy_to_final(size, curr_path, final_path);
 			final_res = curr_res;
-			MPI_Put(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
+
+			MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
+			MPI_Put(&final_res, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
+			MPI_Win_unlock(rank, win);
+
+		}
+
+		int before_get = final_res;
+
+		double time = MPI_Wtime();
+		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
+		MPI_Get(&final_res, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
+		MPI_Win_unlock(rank, win);
+		lock_time += MPI_Wtime() - time;
+
+		if(before_get < final_res){
+			final_res = before_get;
 		}
 
 
 
 		return;
 	}
-
-
 
 	// Go through every node
 	for (int i = 1; i < size; i++) {
@@ -102,11 +116,7 @@ void recursion(
 			// I keep it for the better understanding of the program
 			//curr_path[level] = -1;
 		}
-
-
 	}
-	//MPI_Get(&final_res, shared_size, MPI_INT, 1, 0, shared_size, MPI_INT, win);
-
 }
 
 
@@ -123,7 +133,6 @@ void second_node(
 
 	for (int i = 0; i < recv_size; i++) {
 		if (recv_second[i] != -1) {
-			//MPI_Win_create(sharedbuffer, 5, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 			double start = MPI_Wtime();
 
@@ -141,12 +150,9 @@ void second_node(
 
 			printf("Second: %d, time: %f\n", recv_second[i], MPI_Wtime() - start );
 
-
 		}
 
-
 	}
-	MPI_Get(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
 
 }
 
@@ -157,99 +163,141 @@ void first_node(
     int rank,
     int** first_mins, int** second_mins) {
 
-	int curr_path[size + 1];
-	memset(curr_path, -1, sizeof(curr_path));
-	curr_path[0] = 0;
+	int calculator = numtasks - 1;
 
-	int visited[size];
-	memset(visited, 0, sizeof(visited));
-	visited[0] = 1;
+	if (rank == calculator) {
 
-	int init_bound = 0;
-	init_bound = *(*first_mins);
+		int done;
 
-	for (int i = 1; i < size; i++) {
-		init_bound += *(*first_mins + i) + *(*second_mins + i);
-	}
+		while (1) {
 
-	if (init_bound == 1) {
-		init_bound = init_bound / 2 + 1;
+			done = 1;
+			//First index for bound
+			// Second index for -1 on exit
+			int temp_final[2];
+
+			for (int i = 0; i < numtasks; i++) {
+
+				MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i, 0, win);
+				MPI_Get(&temp_final, shared_size, MPI_INT, i, 0, shared_size, MPI_INT, win);
+				MPI_Win_unlock(i, win);
+
+				// If the bound is better, copy it
+				if (temp_final[0] < final_res) {
+					final_res = temp_final[0];
+				}
+
+				// If it is done, count it as finished
+				if (temp_final[1] == -1) {
+					done++;
+				}
+
+			}
+
+			// If every task is done, exit
+			if ( done == numtasks) {
+				printf("exit\n");
+				return;
+			}
+
+			// Give the best so far
+			for (int i = 0; i < numtasks; i++) {
+
+				MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i, 0, win);
+				MPI_Put(&final_res, 1, MPI_INT, i, 0, 1, MPI_INT, win);
+				MPI_Win_unlock(i, win);
+
+			}
+		}
+
 	} else {
-		init_bound = init_bound / 2;
-	}
+		numtasks--;
+		int curr_path[size + 1];
+		memset(curr_path, -1, sizeof(curr_path));
+		curr_path[0] = 0;
 
+		int visited[size];
+		memset(visited, 0, sizeof(visited));
+		visited[0] = 1;
 
+		int init_bound = 0;
+		init_bound = *(*first_mins);
 
-	//ΜΠΟΡΕΙ ΝΑ ΦΥΓΕΙ ΤΟ ΙΦ ΚΑΙ ΝΑ ΜΕΙΝΕΙ ΜΟΝΟ ΤΟ ELSE ΓΙΑ ΠΙΟ ΚΑΛΑ, ΑΛΛΑ ΔΕΝ ΜΕ ΚΑΙΕΙ ΤΩΡΑ
-	int recv_size;
-	if ((size - 1) % numtasks == 0) {
-		recv_size = size / numtasks;
-	} else {
-		recv_size = ((size - 1) / numtasks) + 1;
-	}
+		for (int i = 1; i < size; i++) {
+			init_bound += *(*first_mins + i) + *(*second_mins + i);
+		}
 
-	//Second nodes that every proccessor will get
-	// ***SPOILER ALERT*** some of them might be -1
-	int recv_second[recv_size];
+		if (init_bound == 1) {
+			init_bound = init_bound / 2 + 1;
+		} else {
+			init_bound = init_bound / 2;
+		}
 
-	//All second nodes (with the -1s too)
-	int seconds[numtasks * recv_size];
+		//ΜΠΟΡΕΙ ΝΑ ΦΥΓΕΙ ΤΟ ΙΦ ΚΑΙ ΝΑ ΜΕΙΝΕΙ ΜΟΝΟ ΤΟ ELSE ΓΙΑ ΠΙΟ ΚΑΛΑ, ΑΛΛΑ ΔΕΝ ΜΕ ΚΑΙΕΙ ΤΩΡΑ
+		int recv_size;
+		if ((size - 1) % numtasks == 0) {
+			recv_size = (size - 1) / numtasks;
+		} else {
+			recv_size = ((size - 1) / numtasks) + 1;
+		}
 
-	if (rank == 0) {
-		//How many real seconds nodes
-		int how_many_each[numtasks];
+		//All second nodes of each task (with the -1s too)
+		int seconds[recv_size];
 
 		//How many second nodes are the minimum
-		int baseline_of_seconds = size / numtasks;
+		int baseline_of_seconds = (size - 1) / numtasks;
 
-		// Minus 1, because I don't care about node number 0 (it is the root node)
 		int diafora = (size - 1) % numtasks;
 
-		// Calculate how_many_each
+		int start_seconds = 0;
+
+		// Run through every task, even mine
 		for (int i = 0; i < numtasks; i++) {
-			how_many_each[i] = baseline_of_seconds;
+
+			// This variable counts how many nodes nodes will get or be skipped
+			int how_many = baseline_of_seconds;
+
+			// If this is a task that has to get one more second node
 			if (diafora > 0) {
-				how_many_each[i]++;
+				how_many++;
 				diafora--;
 			}
 
-		}
+			// If this is me
+			if (i == rank) {
 
-		int second_node = 1;
+				// Fill the array with second nodes
+				for (int j = 0; j < recv_size; j++) {
 
-		//Iterate as many times as the number of machines
-		for (int i = 0; i < numtasks; i++) {
+					// If there is no node left for me
+					if (how_many > 0) {
+						seconds[j] = j + start_seconds + 1;
 
-			// Iterate as many times as the biggest amount of second nodes on one machine
-			for (int j = 0; j < recv_size; j++) {
-				if (how_many_each[i] != 0) {
-					how_many_each[i]--;
-					seconds[(i * recv_size) + j] = second_node++;
-				} else {
-					seconds[(i * recv_size) + j] = -1;
+						how_many--;
+					} else {
+						seconds[j] = -1;
+					}
 				}
+			} else {
+				start_seconds += how_many;
 			}
 
 		}
 
+		int curr_bound = init_bound;
+
+		second_node(size, adj, curr_bound, curr_path, visited, recv_size, seconds, first_mins, second_mins, rank);
+
+		int to_send[] = {final_res, -1};
+		printf("finish rank %d\n", rank );
+		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
+		MPI_Put(&to_send, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
+		MPI_Win_unlock(rank, win);
+
 	}
 
-	//Share all possible second nodes to each processor
-	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
+	//ENa noumero poy to allazo kai ena noumero pou einai 0 i -1 kai mono an ola ginoun -1 tha stamatiso
 
-	int curr_bound = init_bound;
-
-
-	//if (rank == 1) {
-	for (int i = 0; i < recv_size; i++) {
-		printf("In first node %d, rank: %d\n", recv_second[i], rank );
-	}
-	printf("\n");
-	//}
-
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, first_mins, second_mins, rank);
-
-	//printf("Rank %d, time %f\n",rank, MPI_Wtime() - begin );
 
 }
 
@@ -265,7 +313,9 @@ int main(int argc, char *argv[]) {
 
 	MPI_Win_create(&sharedbuffer, shared_size, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
-	sharedbuffer = INT_MAX;
+	for (int i = 0; i < shared_size; i++) {
+		sharedbuffer = INT_MAX;
+	}
 
 	struct arguments arguments;
 
@@ -307,11 +357,9 @@ int main(int argc, char *argv[]) {
 	int *second_mins = malloc(arguments.size * sizeof(int));
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
-
-	MPI_Win_fence(0, win);
 	// This is the only function of the solution in main. Everything else is into this
 	first_node(arguments.size, adj, numtasks, rank, &first_mins, &second_mins);
-	MPI_Win_fence(0, win);
+
 	int finals[numtasks];
 
 	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -330,28 +378,30 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	printf("Lock time %f\n", lock_time);
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Send index to everyone so they know who must send its path
-	MPI_Bcast(&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	// MPI_Bcast(&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 
-	// If the best is master, don't send/receive anything
-	if (index != 0) {
+	// // If the best is master, don't send/receive anything
+	// if (index != 0) {
 
-		int tag = 1;
+	// 	int tag = 1;
 
-		// If this rank has the minimum, then the path
-		if (rank == index) {
-			MPI_Send(final_path, arguments.size + 1, MPI_INT, 0, tag, MPI_COMM_WORLD);
-		} else if (rank == 0) {
-			MPI_Status Status;
-			MPI_Recv(final_path, arguments.size + 1, MPI_INT, index, tag, MPI_COMM_WORLD, &Status);
-		}
+	// 	// If this rank has the minimum, then the path
+	// 	if (rank == index) {
+	// 		MPI_Send(final_path, arguments.size + 1, MPI_INT, 0, tag, MPI_COMM_WORLD);
+	// 	} else if (rank == 0) {
+	// 		MPI_Status Status;
+	// 		MPI_Recv(final_path, arguments.size + 1, MPI_INT, index, tag, MPI_COMM_WORLD, &Status);
+	// 	}
 
-	}
+	// }
 
-	printf("Lock time: %f\n", lock_time );
+	// printf("Lock time: %f\n", lock_time );
 
 	// Display minimum cost and the path of it
 	if (rank == 0) {
@@ -361,9 +411,10 @@ int main(int argc, char *argv[]) {
 		double end = MPI_Wtime();
 		double time_spent = (double)(end - begin);
 
-		for (int i = 0; i < arguments.size + 1; i++) {
-			printf("%d ", final_path[i] );
-		}
+		// for (int i = 0; i < arguments.size + 1; i++) {
+		// 	printf("%d ", final_path[i] );
+		// }
+
 		printf("\n");
 
 		printf("%d\n", final_res );
@@ -371,17 +422,8 @@ int main(int argc, char *argv[]) {
 		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
 
 	}
-	// //MPI_Barrier(MPI_COMM_WORLD);
-	// MPI_Win_fence(0, win);
-	// printf("Rank to insert: %d\n", rank);
-	// MPI_Win_lock_all(0, win);
-	// //for (int i = 0; i < 10; i++) {
-	// 	MPI_Get(&final_res, shared_size, MPI_INT, 0, 0, shared_size, MPI_INT, win);
-	// 	printf("Rank %d value %d\n", rank, final_res );
-	// //}
-	// MPI_Win_unlock_all(win);
-	// printf("Rank out: %d\n", rank);
-	// MPI_Win_fence(0, win);
+
+	MPI_Win_free(&win);
 	MPI_Finalize();
 
 
