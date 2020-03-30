@@ -6,6 +6,7 @@
 #include "headers/arguments.h"
 
 double begin = 0;
+
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -108,36 +109,30 @@ void second_node(
     int curr_bound,
     int curr_path[size + 1],
     int visited[size],
-    int recv_size,
-    int recv_second[recv_size],
     int** first_mins, int** second_mins,
-    int rank) {
+    int rank,
+    int numtasks) {
 
-	for (int i = 0; i < recv_size; i++) {
-		if (recv_second[i] != -1) {
-	//MPI_Win_create(sharedbuffer, 5, sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+	int diafora = (size - 1) % numtasks;
 
+	for (int i = rank + 1; i < size + diafora; i += numtasks) {
+		if (i < size) {
+			
 			double start = MPI_Wtime();
 
 			int temp = curr_bound;
 			curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + i)) / 2);
 
-			curr_path[1] = recv_second[i];
-			visited[recv_second[i]] = 1;
+			curr_path[1] = i;
+			visited[i] = 1;
 
-			//if(rank == 1)
-			//printf("In second nodes %d\n", curr_path[1] );
-
-			recursion(size, adj, curr_bound, adj[curr_path[0]][recv_second[i]], 2, curr_path, visited, first_mins, second_mins, rank);
+			recursion(size, adj, curr_bound, adj[curr_path[0]][i], 2, curr_path, visited, first_mins, second_mins, rank);
 
 			curr_bound = temp;
 			memset(visited, 0, sizeof(int)*size);
 			visited[0] = 1;
 
-			// if (rank == 1)
-				printf("Second: %d, time: %f\n", recv_second[i], MPI_Wtime() - start );
-
-
+			printf("Second: %d, time: %f\n", i, MPI_Wtime() - start );
 		}
 
 		//All these happens because I have to communicate and change bounds now and then
@@ -179,84 +174,11 @@ void first_node(
 		init_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-	if (init_bound == 1) {
-		init_bound = init_bound / 2 + 1;
-	} else {
-		init_bound = init_bound / 2;
-	}
+	init_bound = init_bound / 2;
 
+	second_node(size, adj, init_bound, curr_path, visited, first_mins, second_mins, rank, numtasks);
 
-
-	//ΜΠΟΡΕΙ ΝΑ ΦΥΓΕΙ ΤΟ ΙΦ ΚΑΙ ΝΑ ΜΕΙΝΕΙ ΜΟΝΟ ΤΟ ELSE ΓΙΑ ΠΙΟ ΚΑΛΑ, ΑΛΛΑ ΔΕΝ ΜΕ ΚΑΙΕΙ ΤΩΡΑ
-	int recv_size;
-	if ((size - 1) % numtasks == 0) {
-		recv_size = size / numtasks;
-	} else {
-		recv_size = ((size - 1) / numtasks) + 1;
-	}
-
-	//Second nodes that every proccessor will get
-	// ***SPOILER ALERT*** some of them might be -1
-	int recv_second[recv_size];
-
-	//All second nodes (with the -1s too)
-	int seconds[numtasks * recv_size];
-
-	if (rank == 0) {
-		//How many real seconds nodes
-		int how_many_each[numtasks];
-
-		//How many second nodes are the minimum
-		int baseline_of_seconds = size / numtasks;
-
-		// Minus 1, because I don't care about node number 0 (it is the root node)
-		int diafora = (size - 1) % numtasks;
-
-		// Calculate how_many_each
-		for (int i = 0; i < numtasks; i++) {
-			how_many_each[i] = baseline_of_seconds;
-			if (diafora > 0) {
-				how_many_each[i]++;
-				diafora--;
-			}
-
-		}
-
-		int second_node = 1;
-
-		//Iterate as many times as the number of machines
-		for (int i = 0; i < numtasks; i++) {
-
-			// Iterate as many times as the biggest amount of second nodes on one machine
-			for (int j = 0; j < recv_size; j++) {
-				if (how_many_each[i] != 0) {
-					how_many_each[i]--;
-					seconds[(i * recv_size) + j] = second_node++;
-				} else {
-					seconds[(i * recv_size) + j] = -1;
-				}
-			}
-
-		}
-
-	}
-
-	//Share all possible second nodes to each processor
-	MPI_Scatter(&seconds, recv_size, MPI_INT, recv_second, recv_size, MPI_INT, 0, MPI_COMM_WORLD);
-
-	int curr_bound = init_bound;
-
-
-	//if (rank == 1) {
-	for (int i = 0; i < recv_size; i++) {
-		printf("In first node %d, rank: %d\n", recv_second[i], rank );
-	}
-	printf("\n");
-	//}
-
-	second_node(size, adj, curr_bound, curr_path, visited, recv_size, recv_second, first_mins, second_mins, rank);
-
-	//printf("Rank %d, time %f\n",rank, MPI_Wtime() - begin );
+	printf("Rank %d, time %f\n", rank, MPI_Wtime() - begin );
 
 }
 
@@ -334,7 +256,6 @@ int main(int argc, char *argv[]) {
 	// Send index to everyone so they know who must send its path
 	MPI_Bcast(&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-
 	// If the best is master, don't send/receive anything
 	if (index != 0) {
 
@@ -361,7 +282,7 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
-		printf("%d\n",final_res );
+		printf("%d\n", final_res );
 
 		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
 
