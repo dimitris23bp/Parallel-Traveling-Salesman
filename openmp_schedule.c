@@ -28,7 +28,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		break;
     case ARGP_KEY_ARG: return 0;
     default: return ARGP_ERR_UNKNOWN;
-    }   
+    }
     return 0;
 }
 
@@ -53,7 +53,7 @@ void recursion(
 
 		#pragma omp critical
 		{
-			// If my current result is less than the best so far 
+			// If my current result is less than the best so far
 			// Copy current into best (result and path too)
 			if (curr_res < final_res) {
 				copy_to_final(size, curr_path, final_path);
@@ -100,67 +100,67 @@ void recursion(
 
 
 void second_node(
-	int size, 
-	int adj[size][size], 
-	int curr_bound, 
-	int curr_path[size+1], 
-	int visited[size], 
+	int size,
+	int adj[size][size],
+	int curr_bound,
+	int curr_path[size+1],
+	int visited[size],
 	int** first_mins, int** second_mins,
 	int num_of_threads){
 
     #pragma omp for schedule(dynamic, 1)
 	for (int j = 1; j < size; j++){
-		
 
-		int temp = curr_bound; 
-		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2); 
-  			
-		curr_path[1] = j; 
-		visited[j] = 1; 
 
-		recursion(size, adj, curr_bound, adj[curr_path[0]][j], 2, curr_path, visited, first_mins, second_mins); 
+		int temp = curr_bound;
+		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2);
 
-		curr_bound = temp; 
+		curr_path[1] = j;
+		visited[j] = 1;
+
+		recursion(size, adj, curr_bound, adj[curr_path[0]][j], 2, curr_path, visited, first_mins, second_mins);
+
+		curr_bound = temp;
 		//May be unnecessary
  		memset(visited, 0, sizeof(int)*size);
  		visited[0] = 1;
 	}
 
 }
-  
+
 void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, int num_of_threads){
 
 
-	int init_bound = 0; 
+	int init_bound = 0;
   	init_bound = *(*first_mins);
-  	
+
 	for (int i = 1; i < size; i++) {
-		init_bound += *(*first_mins + i) + *(*second_mins + i); 
+		init_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
 	if(init_bound == 1){
 		init_bound = init_bound / 2 + 1;
 	} else {
-		init_bound = init_bound / 2; 
+		init_bound = init_bound / 2;
 	}
-  
+
 
 	omp_set_num_threads(num_of_threads);
 	#pragma omp parallel firstprivate(init_bound)
 	{
 		//Declare curr_path and set it to start from 0 node
-		int curr_path[size + 1]; 
+		int curr_path[size + 1];
 	 	memset(curr_path, -1, sizeof(curr_path));
-		curr_path[0] = 0; 
+		curr_path[0] = 0;
 
-		//Declare visited nodes and set it to have visited 
-		int visited[size]; 
+		//Declare visited nodes and set it to have visited
+		int visited[size];
  		memset(visited, 0, sizeof(visited));
-		visited[0] = 1; 
+		visited[0] = 1;
 
 	 	int curr_bound = init_bound;
 
-		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads); 
+		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads);
 
 	}
 

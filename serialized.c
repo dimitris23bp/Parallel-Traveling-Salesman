@@ -163,12 +163,6 @@ int main(int argc, char *argv[]) {
 
 	double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 
-	for (int i = 0; i < arguments.size; i++) {
-		printf("%d ", final_path[i] );
-	}
-	printf("%d\n", final_res );
-
-
 	printf("1 %d %f\n", arguments.size, time_spent);
 
 	return 0;

@@ -123,10 +123,6 @@ void second_node(
 		curr_bound = temp;
 		memset(visited, 0, sizeof(*visited)*size);
 		visited[0] = 1;
-
-		printf("Second: %d, time: %f\n", j, omp_get_wtime() - start );
-
-
 	}
 
 }

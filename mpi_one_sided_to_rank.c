@@ -140,9 +140,6 @@ void second_node(
 		curr_bound = temp;
 		memset(visited, 0, sizeof(int)*size);
 		visited[0] = 1;
-
-		printf("Second: %d, time: %f\n", i, MPI_Wtime() - start );
-
 	}
 }
 
@@ -320,12 +317,6 @@ int main(int argc, char *argv[]) {
 		double end = MPI_Wtime();
 		double time_spent = (double)(end - begin);
 
-		for (int i = 0; i < arguments.size + 1; i++) {
-			printf("%d ", final_path[i] );
-		}
-
-		printf("\n");
-		printf("%d\n", final_res );
 		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
 
 	}
