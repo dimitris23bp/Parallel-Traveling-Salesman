@@ -125,11 +125,9 @@ void second_node(
  		memset(visited, 0, sizeof(int)*size);
  		visited[0] = 1;
 	}
-
 }
 
 void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, int num_of_threads){
-
 
 	int init_bound = 0;
   	init_bound = *(*first_mins);
@@ -161,9 +159,7 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 	 	int curr_bound = init_bound;
 
 		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads);
-
 	}
-
 }
 
 int main(int argc, char *argv[]) {

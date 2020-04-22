@@ -11,9 +11,9 @@ MPI_Win win;
 int my_final_res = INT_MAX;
 
 /*
-* parse_opt is a function required by Argp library
-* Every case is a different argument
-*/
+ * parse_opt is a function required by Argp library
+ * Every case is a different argument
+ */
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 	struct arguments *arguments = state->input;
 	switch (key) {
@@ -35,19 +35,19 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 }
 
 /*
-* Recursion is the main function that gets accessed for almost every node
-* (except for first and second node)
-*/
+ * Recursion is the main function that gets accessed for almost every node
+ * (except for first and second node)
+ */
 void recursion(
-    int size,
-    int adj[size][size],
-    int curr_bound,
-    int curr_weight,
-    int level,
-    int curr_path[size + 1],
-    int visited[size],
-    int** first_mins, int** second_mins,
-    int rank) {
+	int size,
+	int adj[size][size],
+	int curr_bound,
+	int curr_weight,
+	int level,
+	int curr_path[size + 1],
+	int visited[size],
+	int** first_mins, int** second_mins,
+	int rank) {
 
 	// If every node has been visited
 	if (level == size) {
@@ -90,7 +90,7 @@ void recursion(
 			// Change variables due to the next visiting
 			int temp = curr_bound;
 			curr_weight += adj[curr_path[level - 1]][i];
-			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
+			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + *(*first_mins + i)) / 2);
 
 			// If current result is less than the bound
 			if (curr_bound + curr_weight < final_res) {
@@ -116,21 +116,21 @@ void recursion(
 }
 
 void second_node(
-    int size,
-    int adj[size][size],
-    int curr_bound,
-    int curr_path[size + 1],
-    int visited[size],
-    int** first_mins, int** second_mins,
-    int rank,
-    int numtasks) {
+	int size,
+	int adj[size][size],
+	int curr_bound,
+	int curr_path[size + 1],
+	int visited[size],
+	int** first_mins, int** second_mins,
+	int rank,
+	int numtasks) {
 
 	for (int i = rank + 1; i < size; i += numtasks) {
 
 		double start = MPI_Wtime();
 
 		int temp = curr_bound;
-		curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + i)) / 2);
+		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + i)) / 2);
 
 		curr_path[1] = i;
 		visited[i] = 1;
@@ -144,11 +144,11 @@ void second_node(
 }
 
 void first_node(
-    int size,
-    int adj[size][size],
-    int numtasks,
-    int rank,
-    int** first_mins, int** second_mins) {
+	int size,
+	int adj[size][size],
+	int numtasks,
+	int rank,
+	int** first_mins, int** second_mins) {
 
 	if (rank == numtasks - 1) {
 
@@ -220,7 +220,6 @@ void first_node(
 		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
 		MPI_Put(&to_send, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
 		MPI_Win_unlock(rank, win);
-
 	}
 }
 

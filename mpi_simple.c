@@ -141,9 +141,7 @@ void second_node(
 				final_res = finals[i];
 			}
 		}
-
 	}
-
 }
 
 void first_node(
@@ -259,7 +257,6 @@ int main(int argc, char *argv[]) {
 			MPI_Status Status;
 			MPI_Recv(final_path, arguments.size + 1, MPI_INT, index, tag, MPI_COMM_WORLD, &Status);
 		}
-
 	}
 
 	// Display minimum cost and the path of it
@@ -269,11 +266,9 @@ int main(int argc, char *argv[]) {
 		double time_spent = (double)(end - begin);
 
 		printf("%f", time_spent);
-
 	}
 
 	MPI_Finalize();
-
 
 	return 0;
 }

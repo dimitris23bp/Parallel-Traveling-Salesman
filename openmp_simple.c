@@ -160,7 +160,6 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 		int curr_bound = init_bound;
 
 		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads);
-
 	}
 
 }

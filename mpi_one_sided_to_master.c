@@ -168,7 +168,6 @@ void first_node(
 	init_bound = init_bound / 2;
 
 	second_node(size, adj, init_bound, curr_path, visited, first_mins, second_mins, rank, numtasks);
-
 }
 
 int main(int argc, char *argv[]) {
@@ -264,8 +263,7 @@ int main(int argc, char *argv[]) {
 		double end = MPI_Wtime();
 		double time_spent = (double)(end - begin);
 
-		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
-
+		printf("%f", time_spent);
 	}
 
 	MPI_Win_free(&win);

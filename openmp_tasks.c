@@ -113,8 +113,6 @@ void second_node(
 	visited[j] = 1;
 
 	recursion(size, adj, curr_bound, adj[curr_path[0]][j], 2, curr_path, visited, first_mins, second_mins);
-
-
 }
 
 void first_node(int size, int adj[size][size], int** first_mins, int** second_mins, int num_of_threads) {
@@ -205,7 +203,7 @@ int main(int argc, char *argv[]) {
 	double final_time = omp_get_wtime() - start_time;
 
 	// Print result so I can access them through the bash script
-	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, final_time);
+	printf("%f", final_time);
 
 	return 0;
 }
