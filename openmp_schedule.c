@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
 	double final_time = omp_get_wtime() - start_time;
 
 	// Print result so I can access them through the bash script
-	printf("%d %d %f\n", arguments.num_of_threads, arguments.size, final_time);
+	printf("%f", final_time);
 
 	return 0;
 }

@@ -108,6 +108,8 @@ void second_node(
     int numtasks) {
 
 	int difference = (size - 1) % numtasks;
+	difference = numtasks - difference;
+	printf("difference is %d\n",difference );
 
 	for (int i = rank + 1; i < size + difference; i += numtasks) {
 		if (i < size) {
@@ -266,7 +268,7 @@ int main(int argc, char *argv[]) {
 		double end = MPI_Wtime();
 		double time_spent = (double)(end - begin);
 
-		printf("%d %d %f\n", numtasks, arguments.size, time_spent);
+		printf("%f", time_spent);
 
 	}
 
