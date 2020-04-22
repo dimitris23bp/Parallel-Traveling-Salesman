@@ -3,6 +3,8 @@ from matplotlib.collections import PolyCollection
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
 import numpy as np
+from matplotlib.ticker import FormatStrFormatter, MultipleLocator
+
 
 def cc(arg, alpha=0.6):
 	return mcolors.to_rgba(arg, alpha=alpha)
@@ -13,16 +15,15 @@ def items():
 	# Second column is size of problem
 	# Third column is execution time
 
-	with open('results.txt', 'r') as f:
+	with open('../results/openmp_schedule.txt', 'r') as f:
 		content = f.readlines()
 
 	# Every data I need, but as strings
 	content = [x.strip().split() for x in content]
-	
 	results = []
 
 	for item in content:
-		curr_result = []	
+		curr_result = []
 		curr_result.append(int(item[0]))
 		curr_result.append(int(item[1]))
 		curr_result.append(float(item[2]))
@@ -36,10 +37,9 @@ def main():
 	fig = plt.figure()
 	ax = fig.gca(projection='3d')
 
-	# The range of size in which the graphs will be displayed 
+	# The range of size in which the graphs will be displayed
 	xs = np.arange(10, 16)
-
-	print(xs)
+	#xs = np.linspace(10., 16., 5)
 	verts = []
 
 	# The proccessor that the graph will be placed
@@ -51,26 +51,21 @@ def main():
 
 		ys = []
 		ys.append(0)
-		correct_size = 1
+		correct_size = 11
 		for item in content:
-
+			print(item)
 			# If this is the correct number of threads
 			if item[0] == z:
-				# If this is the correct size 
+
+				# If this is the correct size
 				if item[1] == correct_size:
+
+					print("mpainei")
 					# Add the time to the index of this size
 					ys.append(item[2])
 
 					# Go to the next size
 					correct_size += 1
-
-
-		# if flag == True:
-		# 	ys = [0, 3.1, 1.2, 1.6, 1.5, 2.3, 1.2, .7, .2, .9, .4]
-		# 	flag = False
-		# else:
-		# 	ys = [0, 3.1, .2, .6, .5, .3, 3.2, .7, .2, .9, .4]
-
 
 		# indexes 0 and -1 are equal to 0 because otherwise the graphs would float
 		ys[-1] = 0
@@ -87,11 +82,24 @@ def main():
 
 	#Label axes and give the scale of them
 	ax.set_xlabel('Size')
-	ax.set_xlim3d(10, 15)
+	ax.set_xlim	(10, 15)
 	ax.set_ylabel('Proccessors')
-	ax.set_ylim3d(1, 5)
+	ax.set_ylim(1, 5)
 	ax.set_zlabel('Time')
-	ax.set_zlim3d(0, 0.1)
+	ax.set_zlim(0, 4)
+
+	#Display cores as integers
+	majorLocator   = MultipleLocator(1)
+	ax.yaxis.set_major_locator(majorLocator)
+	yFormatter = FormatStrFormatter('%d')
+	ax.yaxis.set_major_formatter(yFormatter)
+
+	#Display size as integers
+	majorLocator2 = MultipleLocator(1)
+	ax.xaxis.set_major_locator(majorLocator2)
+	xFormatter = FormatStrFormatter('%d')
+	ax.yaxis.set_major_formatter(xFormatter)
+
 
 	# display the model
 	plt.show()
