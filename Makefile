@@ -19,8 +19,8 @@ openmp_simple: openmp_simple.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 openmp_tasks: openmp_tasks.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_tasks openmp_tasks.c $(INCLUDED_FILES) $(CFLAGS)
 
-openmp_schedule: openmp_simple_schedule.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
-	$(CC) -o openmp_schedule openmp_simple_schedule.c $(INCLUDED_FILES) $(CFLAGS)
+openmp_schedule: openmp_schedule.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o openmp_schedule openmp_schedule.c $(INCLUDED_FILES) $(CFLAGS)
 
 openmp_for: openmp_for.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_for openmp_for.c $(INCLUDED_FILES) $(CFLAGS)
@@ -32,7 +32,7 @@ mpi_one_sided_to_master: mpi_one_sided_to_master.c $(INCLUDED_FILES) $(INCLUDES_
 	$(MPICC) -o mpi_one_sided_to_master mpi_one_sided_to_master.c $(INCLUDED_FILES)
 
 mpi_one_sided_to_rank: mpi_one_sided_to_rank.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
-		$(MPICC) -o mpi_one_sided_to_rank mpi_one_sided_to_rank.c $(INCLUDED_FILES)
+	$(MPICC) -o mpi_one_sided_to_rank mpi_one_sided_to_rank.c $(INCLUDED_FILES)
 
 clean:
 	rm serialized openmp_simple openmp_tasks openmp_schedule openmp_for mpi_simple mpi_one_sided_to_rank mpi_one_sided_to_master
