@@ -5,7 +5,7 @@ vpath %.h headers
 INCLUDED_FILES= common_functions.c matrix_generator.c
 INCLUDES_HEADERS= matrix_generator.h common_functions.h arguments.h
 
-all:  serialized openmp mpi
+all:  serialized openmp mpi create
 
 openmp: openmp_simple openmp_tasks openmp_schedule openmp_for
 mpi: mpi_one_sided_to_master mpi_one_sided_to_rank mpi_simple
@@ -34,5 +34,8 @@ mpi_one_sided_to_master: mpi_one_sided_to_master.c $(INCLUDED_FILES) $(INCLUDES_
 mpi_one_sided_to_rank: mpi_one_sided_to_rank.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(MPICC) -o mpi_one_sided_to_rank mpi_one_sided_to_rank.c $(INCLUDED_FILES)
 
+create: create-arrays.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o create-arrays create-arrays.c $(INCLUDED_FILES)
+
 clean:
-	rm serialized openmp_simple openmp_tasks openmp_schedule openmp_for mpi_simple mpi_one_sided_to_rank mpi_one_sided_to_master
+	rm serialized openmp_simple openmp_tasks openmp_schedule openmp_for mpi_simple mpi_one_sided_to_rank mpi_one_sided_to_master create-arrays
