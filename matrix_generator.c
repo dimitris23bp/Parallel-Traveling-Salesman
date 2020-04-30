@@ -12,9 +12,10 @@ Meanwhile, every array must obey some rules
 */
 void generator(int size, int (*adj)[size], int min_distance, int max_distance){
 
-	//Initializion for rand();
-	srand(time(NULL));
-
+	// Initializion for rand();
+	// Clock aids to get an actual random number
+	clock_t tick = clock();
+	srand(tick);
 
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
@@ -36,7 +37,7 @@ void generator(int size, int (*adj)[size], int min_distance, int max_distance){
 
 void display(int size, int (*adj)[size]){
 
-	int curr_num; 
+	int curr_num;
 
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
@@ -86,10 +87,10 @@ void read_from_file(int size, int (*adj)[size], char* file_name){
 	int i = 0;
 	int j = 0;
 
-	fscanf (file, "%d", &num);      
+	fscanf (file, "%d", &num);
 
-	while (!feof (file)){  
-		fscanf (file, "%d", &num);      
+	while (!feof (file)){
+		fscanf (file, "%d", &num);
 		*(*(adj + i) + j) = num;
 		j++;
 
@@ -112,10 +113,10 @@ int get_size_of_matrix(char* file_name){
 
 	FILE *file;
 	file = fopen(file_name, "r");
-	
+
 	int size = 0;
 
-	fscanf (file, "%d", &size);      
+	fscanf (file, "%d", &size);
 
 	return size;
 }
