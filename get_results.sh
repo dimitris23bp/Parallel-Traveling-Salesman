@@ -5,13 +5,14 @@ make
 
 # Variables for the iterations
 CORES=(4 8 12 16 20)
-SIZES=(12 13 14)
-ITERATIONS=(1 2 3)
+SIZES=(12 14 16 18 20)
+ITERATIONS=(0 1 2)
 
-./create-arrays ${SIZES[0]} ${SIZES[-1]}
+./create-arrays ${SIZES[0]} ${SIZES[-1]} 2
 
 for var in "$@"
 do
+	echo "***Program $var starts***"
 
 	# Find what type of executable is the first argument
 	if [[ $var =~ ^mpi ]]; then
@@ -45,7 +46,6 @@ do
 		for index in ${ITERATIONS[*]}
 		do
 			new=$(./serialized -r -f example-arrays/file${size}-${index}.txt)
-			echo "example-arrays/file${size}-${index}.txt"
 
 			sum=$(echo "$sum + $new" | bc -l)
 		done
@@ -59,11 +59,14 @@ do
 		for core in ${CORES[*]}
 		do
 
+			echo "Cores that are running: $core"
+
 			sum=0
 
 			# Run the programs many times for more accurate results
 			for index in ${ITERATIONS[*]}
 			do
+
 				# Run the first executable as intended
 				if [[ $str == "mpi" ]]; then
 					new=$(mpiexec -np $core ./$EXECUTABLE -r -f example-arrays/file${size}-${index}.txt)

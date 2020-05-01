@@ -3,13 +3,18 @@
 
 int main(int argc, char const *argv[]) {
 
-  if(argc != 3){
+  if(argc < 3){
     printf("Please insert two arguments with min and max size of arrays \n");
+    printf("You can also specify the step with third argument, but it's optional\n");
     return 0;
   }
 
   int min = atoi(argv[1]);
   int max = atoi(argv[2]);
+  int step = 1;
+  if(argc == 4){
+    step = atoi(argv[3]);
+  }
 
   if(max < min){
     printf("Min value is greater than max\n");
@@ -17,7 +22,7 @@ int main(int argc, char const *argv[]) {
   }
 
   for(int i = 0; i < 3; i++){
-    for(int size = min; size <= max; size++){
+    for(int size = min; size <= max; size+=step){
       int size_of_array = 30;
       int adj[size_of_array][size_of_array];
 
