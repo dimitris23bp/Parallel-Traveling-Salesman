@@ -109,7 +109,6 @@ void second_node(
 
 	int difference = (size - 1) % numtasks;
 	difference = numtasks - difference;
-	printf("difference is %d\n",difference );
 
 	for (int i = rank + 1; i < size + difference; i += numtasks) {
 		if (i < size) {
@@ -130,13 +129,13 @@ void second_node(
 		}
 
 		//All these happens because I have to communicate and change bounds now and then
-		int finals[4];
+		int finals[numtasks];
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		MPI_Allgather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, MPI_COMM_WORLD);
 
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < numtasks; i++) {
 			if (finals[i] < final_res) {
 				final_res = finals[i];
 			}
