@@ -40,7 +40,8 @@ void recursion(
     int level,
     int curr_path[size + 1],
     int visited[size],
-    int** first_mins, int** second_mins) {
+    int** first_mins, int** second_mins,
+    clock_t begin) {
 
 	// If every node has been visited
 	if (level == size) {
@@ -52,6 +53,8 @@ void recursion(
 		if (curr_res < final_res) {
 			copy_to_final(size, curr_path, final_path);
 			final_res = curr_res;
+			printf("%f\n", (double)(clock() - begin) / CLOCKS_PER_SEC);
+
 		}
 
 		return;
@@ -59,7 +62,6 @@ void recursion(
 
 	// Go through every node
 	for (int i = 1; i < size; i++) {
-
 		// Check if the node has been visited
 		if (visited[i] == 0) {
 
@@ -69,10 +71,10 @@ void recursion(
 			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 
 			// If current result is less than the bound
-			if (curr_bound + curr_weight < final_res) {
+			if (curr_bound + curr_weight <= final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins, begin);
 			}
 
 			// Restore variables back to normal
@@ -92,7 +94,7 @@ void recursion(
 }
 
 
-void first_node(int size, int adj[size][size], int **first_mins, int **second_mins) {
+void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, clock_t begin) {
 
 	int curr_path[size + 1];
 	memset(curr_path, -1, sizeof(curr_path));
@@ -107,7 +109,6 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 		curr_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-
 	if (curr_bound == 1) {
 		curr_bound = curr_bound / 2 + 1;
 	} else {
@@ -117,7 +118,7 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 	visited[0] = 1;
 	curr_path[0] = 0;
 
-	recursion(size, adj, curr_bound, 0, 1, curr_path, visited, first_mins, second_mins);
+	recursion(size, adj, curr_bound, 0, 1, curr_path, visited, first_mins, second_mins, begin);
 }
 
 int main(int argc, char *argv[]) {
@@ -142,14 +143,16 @@ int main(int argc, char *argv[]) {
 
 	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 99);
+		generator(arguments.size, adj, 50, 100);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
-	final_path = (int *)malloc(arguments.size * sizeof(int));
+	final_path = (int *)malloc((arguments.size+1) * sizeof(int));
 
+	//optimize_matrix(arguments.size, adj);
+	
 	//Starting time of solution
 	clock_t begin = clock();
 
@@ -159,11 +162,19 @@ int main(int argc, char *argv[]) {
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
 	// Start the actual algorithm
-	first_node(arguments.size, adj, &first_mins, &second_mins);
+	first_node(arguments.size, adj, &first_mins, &second_mins, begin);
 
 	double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 
 	printf("%f", time_spent);
+
+	printf("\n");
+	for(int i = 0; i < arguments.size; i++){
+		printf("%d ",final_path[i] );
+	}
+	printf("\n" );
+	printf("%d\n",final_res );
+
 
 	return 0;
 }

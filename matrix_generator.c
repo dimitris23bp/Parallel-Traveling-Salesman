@@ -2,6 +2,27 @@
 #include <stdlib.h>
 #include <time.h>
 
+
+void optimize_matrix(int size, int (*adj)[size]){
+
+	int min = 1000;
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			if(*(*(adj + i) + j) < min && *(*(adj + i) + j) != 0){
+				min = *(*(adj + i) + j);
+			}
+		}
+	}
+
+	min -= 1;
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			*(*(adj + i) + j) -= min;
+		}
+	}
+}
+
+
 /*
 This is the function that is going to create arrays of any size
 Weights are totally random
