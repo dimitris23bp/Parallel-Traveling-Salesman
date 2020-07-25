@@ -130,7 +130,6 @@ int main(int argc, char *argv[]) {
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
-	arguments.num_of_threads = 8;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -143,7 +142,7 @@ int main(int argc, char *argv[]) {
 
 	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 100);
+		generator(arguments.size, adj, 50, 500);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);

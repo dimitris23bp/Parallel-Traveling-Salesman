@@ -9,9 +9,19 @@ all:  serialized openmp mpi create
 
 openmp: openmp_simple openmp_tasks openmp_schedule openmp_for
 mpi: mpi_one_sided_to_master mpi_one_sided_to_rank mpi_simple
+slow-code: serialized_if serialized_repeated
 
 serialized: serialized.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
-	$(CC) -o serialized serialized.c $(INCLUDED_FILES)
+	$(CC) -o serialized serialized.c $(INCLUDED_FILES) -pg
+
+first: first.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o first first.c $(INCLUDED_FILES)
+
+serialized_if: serialized-if.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o serialized_if serialized-if.c $(INCLUDED_FILES)
+
+serialized_repeated: serialized-repeated.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
+	$(CC) -o serialized_repeated serialized-repeated.c $(INCLUDED_FILES)
 
 openmp_simple: openmp_simple.c $(INCLUDED_FILES) $(INCLUDES_HEADERS)
 	$(CC) -o openmp_simple openmp_simple.c $(INCLUDED_FILES) $(CFLAGS)
