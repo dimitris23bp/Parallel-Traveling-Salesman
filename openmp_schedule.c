@@ -4,6 +4,10 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
+
+double start_all;
+double finish_main;
+
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -25,6 +29,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     	break;
 	case 't':
 		arguments->num_of_threads = atoi(arg);
+		break;
+	case 'm':
+		arguments->minimum = atoi(arg);
+		break;
+	case 'M':
+		arguments->maximum = atoi(arg);
 		break;
     case ARGP_KEY_ARG: return 0;
     default: return ARGP_ERR_UNKNOWN;
@@ -76,7 +86,7 @@ void recursion(
 			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 
 			// If current result is less than the bound
-			if (curr_bound + curr_weight < final_res) {
+			if (curr_bound + curr_weight <= final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
 				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
@@ -93,7 +103,7 @@ void recursion(
 			// The outcome is always the same
 			// Every other variable is necessary to change because their values are being compared
 			// I keep it for the better understanding of the program
-			//curr_path[level] = -1;
+			// curr_path[level] = -1;
 		}
 	}
 }
@@ -111,7 +121,6 @@ void second_node(
     #pragma omp for schedule(dynamic, 1)
 	for (int j = 1; j < size; j++){
 
-
 		int temp = curr_bound;
 		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2);
 
@@ -124,28 +133,26 @@ void second_node(
 		//May be unnecessary
  		memset(visited, 0, sizeof(int)*size);
  		visited[0] = 1;
+
 	}
+
 }
 
 void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, int num_of_threads){
 
-	int init_bound = 0;
-  	init_bound = *(*first_mins);
+	int curr_bound = 0;
+  	curr_bound = *(*first_mins);
 
 	for (int i = 1; i < size; i++) {
-		init_bound += *(*first_mins + i) + *(*second_mins + i);
+		curr_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-	if(init_bound == 1){
-		init_bound = init_bound / 2 + 1;
-	} else {
-		init_bound = init_bound / 2;
-	}
-
+	curr_bound = curr_bound / 2;
 
 	omp_set_num_threads(num_of_threads);
-	#pragma omp parallel firstprivate(init_bound)
+	#pragma omp parallel firstprivate(curr_bound)
 	{
+
 		//Declare curr_path and set it to start from 0 node
 		int curr_path[size + 1];
 	 	memset(curr_path, -1, sizeof(curr_path));
@@ -156,9 +163,8 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
  		memset(visited, 0, sizeof(visited));
 		visited[0] = 1;
 
-	 	int curr_bound = init_bound;
-
 		second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, num_of_threads);
+
 	}
 }
 
@@ -184,13 +190,15 @@ int main(int argc, char *argv[]) {
 
 	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 99);
+		generator(arguments.size, adj, arguments.minimum, arguments.maximum);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
+
+	//optimize_matrix(arguments.size, adj);
 
 	//Starting time of solution
 	double start_time = omp_get_wtime();
@@ -205,6 +213,13 @@ int main(int argc, char *argv[]) {
 
 	//Finishing time of solution
 	double final_time = omp_get_wtime() - start_time;
+
+	// for(int i = 0; i < arguments.size; i++){
+	// 	printf("%d ",final_path[i] );
+	// }
+	// printf("\n" );
+	// printf("%d\n",final_res );
+
 
 	// Print result so I can access them through the bash script
 	printf("%f", final_time);
