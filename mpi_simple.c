@@ -5,8 +5,6 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
-double begin = 0;
-
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -25,6 +23,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		break;
 	case 'f':
 		arguments->file_name = arg;
+		break;
+	case 'm':
+		arguments->minimum = atoi(arg);
+		break;
+	case 'M':
+		arguments->maximum = atoi(arg);
+		break;
 	case ARGP_KEY_ARG: return 0;
 	default: return ARGP_ERR_UNKNOWN;
 	}
@@ -43,8 +48,7 @@ void recursion(
     int level,
     int curr_path[size + 1],
     int visited[size],
-    int** first_mins, int** second_mins,
-    int rank) {
+    int** first_mins, int** second_mins) {
 
 	// If every node has been visited
 	if (level == size) {
@@ -67,7 +71,6 @@ void recursion(
 		// Check if the node has been visited
 		if (visited[i] == 0) {
 
-
 			// Change variables due to the next visiting
 			int temp = curr_bound;
 			curr_weight += adj[curr_path[level - 1]][i];
@@ -77,7 +80,7 @@ void recursion(
 			if (curr_bound + curr_weight < final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins, rank);
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
 			}
 
 			// Restore variables back to normal
@@ -91,7 +94,7 @@ void recursion(
 			// The outcome is always the same
 			// Every other variable is necessary to change because their values are being compared
 			// I keep it for the better understanding of the program
-			//curr_path[level] = -1;
+			// curr_path[level] = -1;
 		}
 	}
 }
@@ -113,15 +116,13 @@ void second_node(
 	for (int i = rank + 1; i < size + difference; i += numtasks) {
 		if (i < size) {
 
-			double start = MPI_Wtime();
-
 			int temp = curr_bound;
-			curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + i)) / 2);
+			curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
 
 			curr_path[1] = i;
 			visited[i] = 1;
 
-			recursion(size, adj, curr_bound, adj[curr_path[0]][i], 2, curr_path, visited, first_mins, second_mins, rank);
+			recursion(size, adj, curr_bound, adj[curr_path[0]][i], 2, curr_path, visited, first_mins, second_mins);
 
 			curr_bound = temp;
 			memset(visited, 0, sizeof(int)*size);
@@ -158,16 +159,15 @@ void first_node(
 	memset(visited, 0, sizeof(visited));
 	visited[0] = 1;
 
-	int init_bound = 0;
-	init_bound = *(*first_mins);
+	int curr_bound = *(*first_mins);
 
 	for (int i = 1; i < size; i++) {
-		init_bound += *(*first_mins + i) + *(*second_mins + i);
+		curr_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-	init_bound = init_bound / 2;
+	curr_bound = curr_bound / 2;
 
-	second_node(size, adj, init_bound, curr_path, visited, first_mins, second_mins, rank, numtasks);
+	second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins, rank, numtasks);
 }
 
 int main(int argc, char *argv[]) {
@@ -194,8 +194,16 @@ int main(int argc, char *argv[]) {
 	int adj[arguments.size][arguments.size];
 
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 99);
-		write_to_file(arguments.size, adj, arguments.file_name);
+		if(rank == 0){
+			generator(arguments.size, adj, 50, 99);
+			write_to_file(arguments.size, adj, arguments.file_name);
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		if(rank != 0){
+			read_from_file(arguments.size, adj, arguments.file_name);
+		}
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
@@ -211,7 +219,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Starting time of solution
-	begin = MPI_Wtime();
+	double start_time = MPI_Wtime();
 
 	//Get first_min and second_min as two arays instead of calling them each time
 	int *first_mins = malloc(arguments.size * sizeof(int));
@@ -244,27 +252,19 @@ int main(int argc, char *argv[]) {
 	// Send index to everyone so they know who must send its path
 	MPI_Bcast(&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	// If the best is master, don't send/receive anything
-	if (index != 0) {
-
-		int tag = 1;
-
-		// If this rank has the minimum, then the path
-		if (rank == index) {
-			MPI_Send(final_path, arguments.size + 1, MPI_INT, 0, tag, MPI_COMM_WORLD);
-		} else if (rank == 0) {
-			MPI_Status Status;
-			MPI_Recv(final_path, arguments.size + 1, MPI_INT, index, tag, MPI_COMM_WORLD, &Status);
-		}
-	}
-
 	// Display minimum cost and the path of it
-	if (rank == 0) {
+	if (rank == index) {
 
-		double end = MPI_Wtime();
-		double time_spent = (double)(end - begin);
+		double final_time = (double)(MPI_Wtime() - start_time);
 
-		printf("%f", time_spent);
+		// for(int i = 0; i < arguments.size; i++){
+		// 	printf("%d ",final_path[i] );
+		// }
+		// printf("\n" );
+		// printf("%d\n",final_res );
+
+		// Print result so I can access them through the bash script
+		printf("%f", final_time);
 	}
 
 	MPI_Finalize();
