@@ -131,7 +131,7 @@ void second_node(
 	for (int i = rank + 1; i < size; i += numtasks) {
 
 		int temp = curr_bound;
-		curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
+		curr_bound -= ((*(*first_mins) + * (*first_mins + i)) / 2);
 
 		curr_path[1] = i;
 		visited[i] = 1;
@@ -193,6 +193,8 @@ int main(int argc, char *argv[]) {
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -205,7 +207,7 @@ int main(int argc, char *argv[]) {
 
 	if (arguments.mode == WRITE_MODE) {
 		if(rank == 0){
-			generator(arguments.size, adj, 50, 99);
+			generator(arguments.size, adj, arguments.minimum, arguments.maximum);
 			write_to_file(arguments.size, adj, arguments.file_name);
 		}
 
@@ -255,28 +257,20 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, win);
-		MPI_Put(&index, 1, MPI_INT, 0, 0, 1, MPI_INT, win);
-		MPI_Win_unlock(0, win);
-
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	MPI_Win_fence(0, win);
-	MPI_Get(&index, 1, MPI_INT, 0, 0, 1, MPI_INT, win);
-	MPI_Win_fence(0, win);
+	MPI_Bcast (&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// Display minimum cost and the path of it
 	if (rank == index) {
 
 		double final_time = (double)(MPI_Wtime() - start_time);
 
-		// for(int i = 0; i < arguments.size; i++){
-		// 	printf("%d ",final_path[i] );
-		// }
-		// printf("\n" );
-		// printf("%d\n",final_res );
+		for(int i = 0; i < arguments.size; i++){
+			printf("%d ",final_path[i] );
+		}
+		printf("\n" );
+		printf("%d\n",final_res );
 
 		// Print result so I can access them through the bash script
 		printf("%f", final_time);
