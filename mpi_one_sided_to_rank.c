@@ -5,10 +5,8 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
-double begin = 0;
 int shared_size = 2;
 MPI_Win win;
-int my_final_res = INT_MAX;
 
 /*
  * parse_opt is a function required by Argp library
@@ -28,6 +26,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		break;
 	case 'f':
 		arguments->file_name = arg;
+		break;
+	case 'm':
+		arguments->minimum = atoi(arg);
+		break;
+	case 'M':
+		arguments->maximum = atoi(arg);
+		break;
 	case ARGP_KEY_ARG: return 0;
 	default: return ARGP_ERR_UNKNOWN;
 	}
@@ -60,18 +65,23 @@ void recursion(
 
 			copy_to_final(size, curr_path, final_path);
 			final_res = curr_res;
-			my_final_res = final_res;
 
 			MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
-			MPI_Put(&final_res, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
+			MPI_Put(&final_res, 1, MPI_INT, rank, 0, 1, MPI_INT, win);
 			MPI_Win_unlock(rank, win);
 
 		}
+		/*
+			Αυξανω το shared κατα 1 
+			θα βαζω στη θεση 1 και να παιρνω απο τη θεση 2.
+			Συγκρινω το 1ο με το 2ο αντι για το beforeget με το final
 
+			ο μαστερ θα βαζει στο δευτερο και θα παιρνει απο το πρωτο
+		*/
 		int before_get = final_res;
 
 		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, win);
-		MPI_Get(&final_res, shared_size, MPI_INT, rank, 0, shared_size, MPI_INT, win);
+		MPI_Get(&final_res, 1, MPI_INT, rank, 0, 1, MPI_INT, win);
 		MPI_Win_unlock(rank, win);
 
 		if (before_get < final_res) {
@@ -93,7 +103,7 @@ void recursion(
 			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + *(*first_mins + i)) / 2);
 
 			// If current result is less than the bound
-			if (curr_bound + curr_weight < final_res) {
+			if (curr_bound + curr_weight <= final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
 				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins, rank);
@@ -110,7 +120,7 @@ void recursion(
 			// The outcome is always the same
 			// Every other variable is necessary to change because their values are being compared
 			// I keep it for the better understanding of the program
-			//curr_path[level] = -1;
+			// curr_path[level] = -1;
 		}
 	}
 }
@@ -130,7 +140,7 @@ void second_node(
 		double start = MPI_Wtime();
 
 		int temp = curr_bound;
-		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + i)) / 2);
+		curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
 
 		curr_path[1] = i;
 		visited[i] = 1;
@@ -150,7 +160,7 @@ void first_node(
 	int rank,
 	int** first_mins, int** second_mins) {
 
-	if (rank == numtasks - 1) {
+	if (rank == 0) {
 
 		int done;
 
@@ -163,7 +173,7 @@ void first_node(
 			// Second index for -1 on exit
 			int temp_final[2];
 
-			for (int i = 0; i < numtasks; i++) {
+			for (int i = 1; i < numtasks; i++) {
 
 				MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i, 0, win);
 				MPI_Get(&temp_final, shared_size, MPI_INT, i, 0, shared_size, MPI_INT, win);
@@ -172,6 +182,15 @@ void first_node(
 				// If the bound is better, copy it
 				if (temp_final[0] < final_res) {
 					final_res = temp_final[0];
+					// Give the best so far
+					for (int i = 0; i < numtasks; i++) {
+
+						MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i, 0, win);
+						MPI_Put(&final_res, 1, MPI_INT, i, 0, 1, MPI_INT, win);
+						MPI_Win_unlock(i, win);
+
+					}
+
 				}
 
 				// If it is done, count it as finished
@@ -183,15 +202,6 @@ void first_node(
 			// If every task is done, exit
 			if ( done == numtasks) {
 				return;
-			}
-
-			// Give the best so far
-			for (int i = 0; i < numtasks; i++) {
-
-				MPI_Win_lock(MPI_LOCK_EXCLUSIVE, i, 0, win);
-				MPI_Put(&final_res, 1, MPI_INT, i, 0, 1, MPI_INT, win);
-				MPI_Win_unlock(i, win);
-
 			}
 		}
 	} else {
@@ -257,8 +267,16 @@ int main(int argc, char *argv[]) {
 	int adj[arguments.size][arguments.size];
 
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 99);
-		write_to_file(arguments.size, adj, arguments.file_name);
+		if(rank == 0){
+			generator(arguments.size, adj, 50, 99);
+			write_to_file(arguments.size, adj, arguments.file_name);
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		if(rank != 0){
+			read_from_file(arguments.size, adj, arguments.file_name);
+		}
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
@@ -273,8 +291,10 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 
+	//optimize_matrix(arguments.size, adj);
+
 	//Starting time of solution
-	begin = MPI_Wtime();
+	double start_time = MPI_Wtime();
 
 	//Get first_min and second_min as two arays instead of calling them each time
 	int *first_mins = malloc(arguments.size * sizeof(int));
@@ -286,37 +306,37 @@ int main(int argc, char *argv[]) {
 
 	int finals[numtasks];
 
-	MPI_Gather(&my_final_res, 1, MPI_INT, finals, 1, MPI_INT, numtasks - 1, MPI_COMM_WORLD);
+	MPI_Gather(&final_res, 1, MPI_INT, finals, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// Find the minimum of each rank's minimum
-	if (rank == numtasks - 1)
-	{
-		for (int i = 0; i < numtasks; i++) {
-			if (finals[i] < my_final_res) {
+	if (rank == 0) {
+
+		for (int i = 1; i < numtasks; i++) {
+
+			if (finals[i] <= final_res) {
 				final_res = finals[i];
 				index = i;
 			}
 		}
 
-		MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, win);
-		MPI_Put(&index, 1, MPI_INT, 0, 0, 1, MPI_INT, win);
-		MPI_Win_unlock(0, win);
-
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	MPI_Win_fence(0, win);
-	MPI_Get(&index, 1, MPI_INT, 0, 0, 1, MPI_INT, win);
-	MPI_Win_fence(0, win);
+	// Send the index of the machine with the best path
+	MPI_Bcast (&index, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// Display minimum cost and the path of it
 	if (rank == index) {
 
-		double end = MPI_Wtime();
-		double time_spent = (double)(end - begin);
+		double final_time = (double)(MPI_Wtime() - start_time);
 
-		printf("%f", time_spent);
+		for(int i = 0; i < arguments.size; i++){
+			printf("%d ",final_path[i] );
+		}
+		printf("\n" );
+		printf("%d\n",final_res );
+
+		// Print result so I can access them through the bash script
+		printf("%f", final_time);
 
 	}
 
