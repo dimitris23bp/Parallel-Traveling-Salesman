@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <limits.h>
 
 void optimize_matrix(int size, int (*adj)[size]){
 
-	int min = 1000;
+	int min = INT_MAX;
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
 			if(*(*(adj + i) + j) < min && *(*(adj + i) + j) != 0){
