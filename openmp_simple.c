@@ -178,6 +178,8 @@ int main(int argc, char *argv[]) {
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
 	arguments.num_of_threads = 8;
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -197,6 +199,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
+
+	// Check if the memory has been successfully
+	// allocated by malloc or not
+	if (final_path == NULL) {
+		printf("Memory not allocated.\n");
+		exit(0);
+	}
 
 	//optimize_matrix(arguments.size, adj);
 

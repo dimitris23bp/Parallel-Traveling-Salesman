@@ -26,6 +26,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 	case 't':
 		arguments->num_of_threads = atoi(arg);
 		break;
+	case 'm':
+		arguments->minimum = atoi(arg);
+		break;
+	case 'M':
+		arguments->maximum = atoi(arg);
+		break;
 	case ARGP_KEY_ARG: return 0;
 	default: return ARGP_ERR_UNKNOWN;
 	}
@@ -93,11 +99,10 @@ void recursion(
 			// The outcome is always the same
 			// Every other variable is necessary to change because their values are being compared
 			// I keep it for the better understanding of the program
-			//curr_path[level] = -1;
+			// curr_path[level] = -1;
 		}
 	}
 }
-
 
 void second_node(
     int size,
@@ -117,18 +122,14 @@ void second_node(
 
 void first_node(int size, int adj[size][size], int** first_mins, int** second_mins, int num_of_threads) {
 
-	int init_bound = 0;
-	init_bound = *(*first_mins);
+	int curr_bound = 0;
+	curr_bound = *(*first_mins);
 
 	for (int i = 1; i < size; i++) {
-		init_bound += *(*first_mins + i) + *(*second_mins + i);
+		curr_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-	if (init_bound == 1) {
-		init_bound = init_bound / 2 + 1;
-	} else {
-		init_bound = init_bound / 2;
-	}
+	curr_bound = curr_bound / 2;
 
 	omp_set_num_threads(num_of_threads);
 	#pragma omp parallel
@@ -150,7 +151,6 @@ void first_node(int size, int adj[size][size], int** first_mins, int** second_mi
 					memset(visited, 0, sizeof(visited));
 					visited[0] = 1;
 
-					int curr_bound = init_bound;
 					second_node(size, adj, curr_bound, curr_path, visited, j, first_mins, second_mins);
 				}
 			}
@@ -168,6 +168,8 @@ int main(int argc, char *argv[]) {
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
 	arguments.num_of_threads = 8;
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -180,13 +182,20 @@ int main(int argc, char *argv[]) {
 
 	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 99);
+		generator(arguments.size, adj, arguments.minimum, arguments.maximum);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
 	}
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
+
+	// Check if the memory has been successfully
+	// allocated by malloc or not
+	if (final_path == NULL) {
+		printf("Memory not allocated.\n");
+		exit(0);
+	}
 
 	//Starting time of solution
 	double start_time = omp_get_wtime();
@@ -199,8 +208,14 @@ int main(int argc, char *argv[]) {
 	// Start the actual algorithm
 	first_node(arguments.size, adj, &first_mins, &second_mins, arguments.num_of_threads);
 
-	//Finishing time of solution
+	// Finishing time of solution
 	double final_time = omp_get_wtime() - start_time;
+
+	// for(int i = 0; i < arguments.size; i++){
+	// 	printf("%d ",final_path[i] );
+	// }
+	// printf("\n" );
+	// printf("%d\n",final_res );
 
 	// Print result so I can access them through the bash script
 	printf("%f", final_time);

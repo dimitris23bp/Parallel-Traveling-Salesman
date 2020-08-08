@@ -178,6 +178,8 @@ int main(int argc, char *argv[]) {
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
 	arguments.num_of_threads = 8;
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -198,6 +200,13 @@ int main(int argc, char *argv[]) {
 
 	final_path = (int *)malloc(arguments.size * sizeof(int));
 
+	// Check if the memory has been successfully
+	// allocated by malloc or not
+	if (final_path == NULL) {
+		printf("Memory not allocated.\n");
+		exit(0);
+	}
+
 	//optimize_matrix(arguments.size, adj);
 
 	//Starting time of solution
@@ -214,12 +223,11 @@ int main(int argc, char *argv[]) {
 	//Finishing time of solution
 	double final_time = omp_get_wtime() - start_time;
 
-	// for(int i = 0; i < arguments.size; i++){
-	// 	printf("%d ",final_path[i] );
-	// }
-	// printf("\n" );
-	// printf("%d\n",final_res );
-
+	for(int i = 0; i < arguments.size; i++){
+		printf("%d ",final_path[i] );
+	}
+	printf("\n" );
+	printf("%d\n",final_res );
 
 	// Print result so I can access them through the bash script
 	printf("%f", final_time);

@@ -22,6 +22,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		break;
 	case 'f':
 		arguments->file_name = arg;
+		break;
+	case 'm':
+		arguments->minimum = atoi(arg);
+		break;
+	case 'M':
+		arguments->maximum = atoi(arg);
+		break;
 	case ARGP_KEY_ARG: return 0;
 	default: return ARGP_ERR_UNKNOWN;
 	}
@@ -40,8 +47,7 @@ void recursion(
     int level,
     int curr_path[size + 1],
     int visited[size],
-    int** first_mins, int** second_mins,
-    clock_t begin) {
+    int** first_mins, int** second_mins) {
 
 	// If every node has been visited
 	if (level == size) {
@@ -53,8 +59,6 @@ void recursion(
 		if (curr_res < final_res) {
 			copy_to_final(size, curr_path, final_path);
 			final_res = curr_res;
-			printf("%f\n", (double)(clock() - begin) / CLOCKS_PER_SEC);
-
 		}
 
 		return;
@@ -62,19 +66,24 @@ void recursion(
 
 	// Go through every node
 	for (int i = 1; i < size; i++) {
+
 		// Check if the node has been visited
 		if (visited[i] == 0) {
 
 			// Change variables due to the next visiting
 			int temp = curr_bound;
 			curr_weight += adj[curr_path[level - 1]][i];
-			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
+			//curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 
-			// If current result is less than the bound
+            if (level==1) 
+              curr_bound -= ((*(*first_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
+            else
+				curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
+		
 			if (curr_bound + curr_weight <= final_res) {
 				curr_path[level] = i;
 				visited[i] = 1;
-				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins, begin);
+				recursion(size, adj, curr_bound, curr_weight, level + 1, curr_path, visited, first_mins, second_mins);
 			}
 
 			// Restore variables back to normal
@@ -88,13 +97,13 @@ void recursion(
 			// The outcome is always the same
 			// Every other variable is necessary to change because their values are being compared
 			// I keep it for the better understanding of the program
-			//curr_path[level] = -1;
+			// curr_path[level] = -1;
 		}
 	}
 }
 
 
-void first_node(int size, int adj[size][size], int **first_mins, int **second_mins, clock_t begin) {
+void first_node(int size, int adj[size][size], int **first_mins, int **second_mins) {
 
 	int curr_path[size + 1];
 	memset(curr_path, -1, sizeof(curr_path));
@@ -109,16 +118,12 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 		curr_bound += *(*first_mins + i) + *(*second_mins + i);
 	}
 
-	if (curr_bound == 1) {
-		curr_bound = curr_bound / 2 + 1;
-	} else {
-		curr_bound = curr_bound / 2;
-	}
+	curr_bound = curr_bound / 2;
 
 	visited[0] = 1;
 	curr_path[0] = 0;
 
-	recursion(size, adj, curr_bound, 0, 1, curr_path, visited, first_mins, second_mins, begin);
+	recursion(size, adj, curr_bound, 0, 1, curr_path, visited, first_mins, second_mins);
 }
 
 int main(int argc, char *argv[]) {
@@ -130,6 +135,8 @@ int main(int argc, char *argv[]) {
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -142,7 +149,7 @@ int main(int argc, char *argv[]) {
 
 	// Fill the array of distances
 	if (arguments.mode == WRITE_MODE) {
-		generator(arguments.size, adj, 50, 500);
+		generator(arguments.size, adj, arguments.minimum, arguments.maximum);
 		write_to_file(arguments.size, adj, arguments.file_name);
 	} else {
 		read_from_file(arguments.size, adj, arguments.file_name);
@@ -150,10 +157,17 @@ int main(int argc, char *argv[]) {
 
 	final_path = (int *)malloc((arguments.size+1) * sizeof(int));
 
+	// Check if the memory has been successfully
+	// allocated by malloc or not
+	if (final_path == NULL) {
+		printf("Memory not allocated.\n");
+		exit(0);
+	}
+
 	//optimize_matrix(arguments.size, adj);
 	
 	//Starting time of solution
-	clock_t begin = clock();
+	clock_t start_time = clock();
 
 	//Get first_min and second_min as two arrays instead of calling them every time I need them
 	int *first_mins = malloc(arguments.size * sizeof(int));
@@ -161,18 +175,18 @@ int main(int argc, char *argv[]) {
 	find_mins(arguments.size, &first_mins, &second_mins, adj);
 
 	// Start the actual algorithm
-	first_node(arguments.size, adj, &first_mins, &second_mins, begin);
+	first_node(arguments.size, adj, &first_mins, &second_mins);
 
-	double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+	double final_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
 
-	printf("%f", time_spent);
-
-	printf("\n");
 	for(int i = 0; i < arguments.size; i++){
 		printf("%d ",final_path[i] );
 	}
 	printf("\n" );
 	printf("%d\n",final_res );
+
+	// Print result so I can access them through the bash script
+	printf("%f", final_time);
 
 
 	return 0;
