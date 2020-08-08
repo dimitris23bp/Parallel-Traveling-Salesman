@@ -117,7 +117,7 @@ void second_node(
 		if (i < size) {
 
 			int temp = curr_bound;
-			curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
+			curr_bound -= ((*(*first_mins) + * (*first_mins + i)) / 2);
 
 			curr_path[1] = i;
 			visited[i] = 1;
@@ -183,6 +183,8 @@ int main(int argc, char *argv[]) {
 	arguments.size = SIZE;
 	arguments.mode = WRITE_MODE;
 	arguments.file_name = "example-arrays/file01.txt";
+	arguments.minimum = 50;
+	arguments.maximum = 100;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -195,7 +197,7 @@ int main(int argc, char *argv[]) {
 
 	if (arguments.mode == WRITE_MODE) {
 		if(rank == 0){
-			generator(arguments.size, adj, 50, 99);
+			generator(arguments.size, adj, arguments.minimum, arguments.maximum);
 			write_to_file(arguments.size, adj, arguments.file_name);
 		}
 
