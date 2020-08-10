@@ -3,4 +3,4 @@ example-arrays/
 *.txt
 *.odt
 *.pdf
-*.out
+*.o
