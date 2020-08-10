@@ -1,9 +1,6 @@
-mpi
-openmp_simple
-openmp_tasks
-serialized
 slow-code/
 example-arrays/
 *.txt
 *.odt
 *.pdf
+*.out
