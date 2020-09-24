@@ -7,18 +7,18 @@ static error_t parse_opt(int, char*, struct argp_state*);
 
 extern int num;
 
-const char *argp_program_version = "Travelling-Salesname 0.1";
+const char *argp_program_version = "1.0";
 const char *argp_program_bug_address = "<dimitris23bp@gmail.com>";
-static char doc[] = "My program description.";
+static char doc[] = "The arguments for the TSP.";
 static char args_doc[] = "[FILENAME]...";
 static struct argp_option options[] = { 
     { "read",	'r',	0, 0, "Read from file" },
     { "write",	'w',	0, 0, "Write to file" },
-    { "size",	's',	"the size", 0, "Specific size of the array" },
-    { "file",	'f',	"file name", 0, "Specific name of the file" },
-    { "threads",'t',    "number of threads", 0, "NUmber of threads for parallel solutions"},
-    { "minimum",'m',    "minimum", 0, "Minimum distance of nodes"},
-    { "maximum",'M',    "maximum", 0, "Maximum distance of nodes"},
+    { "size",	's',	"SIZE", 0, "Specific size of the array" },
+    { "file",	'f',	"NAME", 0, "Specific name of the file" },
+    { "threads",'t',    "THREADS", 0, "NUmber of threads for parallel solutions"},
+    { "minimum",'m',    "MINIMUM", 0, "Minimum distance of nodes"},
+    { "maximum",'M',    "MAXIMUM", 0, "Maximum distance of nodes"},
     { 0 } 
 };
 
