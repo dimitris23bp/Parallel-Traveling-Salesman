@@ -117,7 +117,7 @@ void second_node(
 	for (int j = omp_get_thread_num() + 1; j < size; j += num_of_threads) {
 
 		int temp = curr_bound;
-		curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + j)) / 2);
+		curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
 
 		curr_path[1] = j;
 		visited[j] = 1;

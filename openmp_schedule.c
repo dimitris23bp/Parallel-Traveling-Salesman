@@ -4,10 +4,6 @@
 #include "headers/common_functions.h"
 #include "headers/arguments.h"
 
-
-double start_all;
-double finish_main;
-
 /*
 * parse_opt is a function required by Argp library
 * Every case is a different argument
@@ -122,7 +118,7 @@ void second_node(
 	for (int j = 1; j < size; j++){
 
 		int temp = curr_bound;
-		curr_bound -= ((*(*second_mins + curr_path[0]) + *(*first_mins + j))/2);
+		curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
 
 		curr_path[1] = j;
 		visited[j] = 1;
@@ -223,11 +219,11 @@ int main(int argc, char *argv[]) {
 	//Finishing time of solution
 	double final_time = omp_get_wtime() - start_time;
 
-	for(int i = 0; i < arguments.size; i++){
-		printf("%d ",final_path[i] );
-	}
-	printf("\n" );
-	printf("%d\n",final_res );
+	// for(int i = 0; i < arguments.size; i++){
+	// 	printf("%d ",final_path[i] );
+	// }
+	// printf("\n" );
+	// printf("%d\n",final_res );
 
 	// Print result so I can access them through the bash script
 	printf("%f", final_time);

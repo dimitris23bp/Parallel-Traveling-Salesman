@@ -113,7 +113,7 @@ void second_node(
     int j,
     int** first_mins, int** second_mins) {
 
-	curr_bound -= ((*(*second_mins + curr_path[0]) + * (*first_mins + j)) / 2);
+	curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
 	curr_path[1] = j;
 	visited[j] = 1;
 

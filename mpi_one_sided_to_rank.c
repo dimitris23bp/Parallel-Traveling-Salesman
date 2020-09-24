@@ -331,11 +331,11 @@ int main(int argc, char *argv[]) {
 
 		double final_time = (double)(MPI_Wtime() - start_time);
 
-		for(int i = 0; i < arguments.size; i++){
-			printf("%d ",final_path[i] );
-		}
-		printf("\n" );
-		printf("%d\n",final_res );
+		// for(int i = 0; i < arguments.size; i++){
+		// 	printf("%d ",final_path[i] );
+		// }
+		// printf("\n" );
+		// printf("%d\n",final_res );
 
 		// Print result so I can access them through the bash script
 		printf("%f", final_time);

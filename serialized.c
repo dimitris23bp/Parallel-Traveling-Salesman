@@ -73,12 +73,8 @@ void recursion(
 			// Change variables due to the next visiting
 			int temp = curr_bound;
 			curr_weight += adj[curr_path[level - 1]][i];
-			//curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 
-            if (level==1) 
-              curr_bound -= ((*(*first_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
-            else
-				curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
+			curr_bound -= ((*(*second_mins + curr_path[level - 1]) + * (*first_mins + i)) / 2);
 		
 			if (curr_bound + curr_weight <= final_res) {
 				curr_path[level] = i;
@@ -99,6 +95,30 @@ void recursion(
 			// I keep it for the better understanding of the program
 			// curr_path[level] = -1;
 		}
+	}
+}
+
+void second_node(
+    int size,
+    int adj[size][size],
+    int curr_bound,
+    int curr_path[size + 1],
+    int visited[size],
+    int** first_mins, int** second_mins) {
+
+	for (int j = 1; j < size; j++) {
+
+		int temp = curr_bound;
+		curr_bound -= ((*(*first_mins) + * (*first_mins + j)) / 2);
+
+		curr_path[1] = j;
+		visited[j] = 1;
+
+		recursion(size, adj, curr_bound, adj[curr_path[0]][j], 2, curr_path, visited, first_mins, second_mins);
+
+		curr_bound = temp;
+		memset(visited, 0, sizeof(*visited)*size);
+		visited[0] = 1;
 	}
 }
 
@@ -123,7 +143,7 @@ void first_node(int size, int adj[size][size], int **first_mins, int **second_mi
 	visited[0] = 1;
 	curr_path[0] = 0;
 
-	recursion(size, adj, curr_bound, 0, 1, curr_path, visited, first_mins, second_mins);
+	second_node(size, adj, curr_bound, curr_path, visited, first_mins, second_mins);
 }
 
 int main(int argc, char *argv[]) {
@@ -179,11 +199,11 @@ int main(int argc, char *argv[]) {
 
 	double final_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
 
-	for(int i = 0; i < arguments.size; i++){
-		printf("%d ",final_path[i] );
-	}
-	printf("\n" );
-	printf("%d\n",final_res );
+	// for(int i = 0; i < arguments.size; i++){
+	// 	printf("%d ",final_path[i] );
+	// }
+	// printf("\n" );
+	// printf("%d\n",final_res );
 
 	// Print result so I can access them through the bash script
 	printf("%f", final_time);
